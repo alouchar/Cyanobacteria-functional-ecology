@@ -11,7 +11,6 @@
 ##########################################################################################
 
 #### 1. DATA IMPORTATION
-
 # dat contains flow cytometry informations at the individual level for each treatment obtained through the PhytoCytoTraits GUI.
 # Treatment contains informations on the different environmental conditions
 
@@ -75,7 +74,6 @@ dat$PC_Chla <- dat$`670/30[640]`/dat$`692/40[488]`
 
 #### 4. DATA CLEANING
 ## 4.1. Homogeneisation of labels
-
 dat <-
   dat %>%
   dplyr::filter(Label == "Control" | Label == "Nitrogen" | Label == "Phosphorus" | Label == "CO2" | Label == "Light")
