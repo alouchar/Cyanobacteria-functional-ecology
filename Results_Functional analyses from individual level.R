@@ -126,18 +126,22 @@ results <- foreach(l = 1:length(replicat), .combine = c,.options.snow = opts) %d
 
 # Stop the progression bar
 close(pb)
+
+# Merge the results of the replicates into a single environmental condition
 phosphate_vol <- hypervolume_join(results)
 
-# Saving the hypervolume data
+# Local save of the hypervolume data 
 save(phosphate_vol, file = "Phosphate hypervolume.RData")
 
 # Stop the parallel cluster
 stopCluster(cl)
 
+# When arrived here, re-run from line 108 with change of environmental condition.
+
 # Load the data previously saved. Example with control conditions
 load("Control hypervolume.Rdata")
 
-## Computation of functional diversity indices from the hypervolume
+## 3.2. Computation of functional diversity indices from the hypervolume
 Control <- data.frame(
   Treatment = "Control",
   rich = kernel.alpha(Control_vol),
