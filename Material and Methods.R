@@ -45,11 +45,9 @@ treatment <- readxl::read_excel("C:/Users/ArnaudL/Desktop/Zhipeng data/Treatment
   dat$db_FCM[dat$filename == "Zhipeng DW cyanoMQ_005.fcs" & dat$db_FCM == 2] <- "Cyanobacteria"
   dat$db_FCM[dat$filename == "Zhipeng DW cyanoMQ_006.fcs" & dat$db_FCM == 2] <- "Cyanobacteria"
   
-  
   dat$db_FCM[dat$filename == "Zhipeng DW cyanoMQ_009.fcs" & dat$db_FCM == 3] <- "Cyanobacteria"
   dat$db_FCM[dat$filename == "Zhipeng DW cyanoMQ_010.fcs" & dat$db_FCM == 3] <- "Cyanobacteria"
   dat$db_FCM[dat$filename == "Zhipeng DW cyanoMQ_013.fcs" & dat$db_FCM == 3] <- "Cyanobacteria"
-  
   
   dat$db_FCM[dat$filename == "Zhipeng DW cyanoMQ_011.fcs" & dat$db_FCM == 4] <- "Cyanobacteria"
   dat$db_FCM[dat$filename == "Zhipeng DW cyanoMQ_012.fcs" & dat$db_FCM == 4] <- "Cyanobacteria"
@@ -58,6 +56,7 @@ treatment <- readxl::read_excel("C:/Users/ArnaudL/Desktop/Zhipeng data/Treatment
   
 }
 
+## 2.2. Subset of data: working only with cyanobacteria cluster
 dat <- 
   dat %>%
   filter(db_FCM == "Cyanobacteria")
@@ -65,7 +64,7 @@ dat <-
 # merge treatment and dat by filename
 dat <- merge(dat, treatment, by.x = "filename",by.y = "Filename", all.x = TRUE)
 
-## 2.2. Data are already log10 transformed. Back transformation to original values
+## 2.3. Data are already log10 transformed. Back transformation to original values
 dat[,c(3:24)] <- 10^(dat[,c(3:24)]-1)
 
 #### 3. CREATION OF NEW TRAITS (see table 1)
