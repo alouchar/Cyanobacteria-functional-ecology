@@ -10,7 +10,8 @@
 ############################## RESULTS SECTION ##############################
 #############################################################################
 
-#### 1. FLOW CYTOMETRY TRAITS
+#### PRODUCTION OF GRAPHICAL AND NUMERICAL OUTPUTS AS WELL AS INTERMEDIATE DATASETS
+## 1. Flow cytometry traits
 ## 1.1. Correlation matrix between traits to identify collinearity (supplementary material figure 2)
 res <- cor(DATA[,c(1:8)])
 p.mat <- cor.mtest(DATA[,c(1:8)])
