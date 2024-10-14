@@ -24,7 +24,6 @@ for(p in packages){
   require(p, character.only = T)
 }
 
-
 rm(p,packages)
 
 options(scipen = 999)
