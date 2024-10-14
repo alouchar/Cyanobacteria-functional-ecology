@@ -34,7 +34,8 @@ PCAtest(PCA$tab, 999, 999, 0.001, varcorr=TRUE, counter=FALSE, plot=TRUE)
 rowSums(100*(factoextra::get_pca_var(PCA)$cos2)[,c(1,2)])
 
 
-## 2.7. Plot PCA Biplot with density curve per environmental conditions (superimposition check between environmental conditions; Figure 3)
+## 2.7. Plot PCA Biplot with density curve per environmental conditions (superimposition check between environmental conditions)
+# Figure 3
 p <- ggplot() +
   geom_point(PCA$li, mapping = aes(x = PCA$li$Axis1, y = PCA$li$Axis2, color = as.factor(DATA$Label)), alpha = 0.3, size = 0.7) +
   geom_vline(xintercept = 0, linetype = "dashed", linewidth = 0.5) +
@@ -89,8 +90,8 @@ reduced_dim <- readRDS("N:/NIOO-Data/Dep.AqE/Staging/van de Waal_group/Zhipeng d
 bw_estimate <- hypervolume::estimate_bandwidth(reduced_dim[, c("PCA1","PCA2")], method = "cross-validation")
 
 
-# 3. Computation of functional diversity indices based on functional hypervolume
-# 3.1. Code optimization running foreach function on 4 cores
+## 3. Computation of functional diversity indices based on functional hypervolume
+## 3.1. Code optimization running foreach function on 4 cores
 require(foreach)
 require(doSNOW)
 require(progress)
@@ -126,17 +127,13 @@ results <- foreach(l = 1:length(replicat), .combine = c,.options.snow = opts) %d
 
 # Stop the progression bar
 close(pb)
-
-# Merge the results of the replicates into a single environmental condition
 phosphate_vol <- hypervolume_join(results)
 
-# Local save of the hypervolume data 
+# Saving the hypervolume data
 save(phosphate_vol, file = "Phosphate hypervolume.RData")
 
 # Stop the parallel cluster
 stopCluster(cl)
-
-# When arrived here, re-run from line 108 with change of environmental condition.
 
 # Load the data previously saved. Example with control conditions
 load("Control hypervolume.Rdata")
@@ -151,3 +148,241 @@ Control <- data.frame(
 
 # Save the indices on a csv file
 write.table(Control, "Control.csv", row.names = FALSE, sep= ";", dec = ',')
+
+## 3.3. Kruskal-Wallis test
+setwd("C:/Users/ArnaudL/Desktop/Refined functional space/")
+
+alpha <- readxl::read_xlsx("Alpha_indices.xlsx")
+
+Functional_rep_space_microcystis <- alpha[c(1:20),]
+
+data_summary <- function(data, varname, groupnames){
+  require(plyr)
+  summary_func <- function(x, col){
+    c(mean = mean(x[[col]], na.rm=TRUE),
+      sd = sd(x[[col]], na.rm=TRUE))
+  }
+  data_sum<-ddply(data, groupnames, .fun=summary_func,
+                  varname)
+  data_sum <- rename(data_sum, c("mean" = varname))
+  return(data_sum)
+}
+
+alpha_func <- data_summary(data = Functional_rep_space_microcystis, varname = "div", groupnames = "Treatment")
+
+alpha_func$Treatment <- gsub("CO2", "+CO2", alpha_func$Treatment)
+alpha_func$Treatment <- stringr::str_replace_all(alpha_func$Treatment, "Light", "-L")
+alpha_func$Treatment <- gsub("Nitrogen", "-N", alpha_func$Treatment)
+alpha_func$Treatment <- gsub("Phosphate", "-P", alpha_func$Treatment)
+alpha_func$Treatment <- gsub("Control", "Cont", alpha_func$Treatment)
+
+
+# dat <- alpha_func
+dat <- cbind(dat,alpha_func)
+
+dat <- dat[,-c(4,7)]
+
+names(dat)[3] <- "sd_rich"
+names(dat)[5] <- "sd_even"
+names(dat)[7] <- "sd_div"
+
+rm(list = setdiff(ls(),c('dat',"alpha")))
+
+
+test_results <- kruskal.test(div ~ Treatment, data = alpha)
+test_results$statistic <- round(test_results$statistic, 2)
+test_results$p.value <- round(test_results$p.value, 3)
+
+
+## 3.4. Conover post-hoc test
+require(conover.test)
+post_hoc <- conover.test(alpha$div, alpha$Treatment, kw = FALSE, alpha = 0.05, label = TRUE, list = FALSE, method="bh")
+
+
+## 3.5. Extract pairwise significance as letters
+v <- as.data.frame(cbind(comparisons = post_hoc$comparisons, p_val = post_hoc$P.adjusted*2))
+require(stringr)
+
+v[c('Treatment 1','Treatment 2')] <- str_split_fixed(v$comparisons, " - ", 2)
+v <- v[,-1]
+
+nameVals <- sort(unique(unlist(v[2:3])))
+myMat <- matrix(0, length(nameVals), length(nameVals), dimnames = list(nameVals, nameVals))
+myMat[as.matrix(v[c("Treatment 1", "Treatment 2")])] <- v[["p_val"]]
+diag(myMat) <- 1
+
+myMat <- apply(myMat, 2, as.numeric)
+rownames(myMat) <- colnames(myMat)
+
+myMat <- as.matrix(Matrix::forceSymmetric(myMat, "U"))
+
+require(multcompView)
+
+if (!require(multcompView)){install.packages("multcompView")} 
+
+# Matrix creation
+nameVals <- sort(unique(unlist(v[2:3])))
+myMat <- matrix(0, length(nameVals), length(nameVals), dimnames = list(nameVals, nameVals))
+myMat[as.matrix(v[c("Treatment 1", "Treatment 2")])] <- v[["p_val"]]
+diag(myMat) <- 1
+
+myMat <- apply(myMat, 2, as.numeric)
+rownames(myMat) <- colnames(myMat)
+
+# Define the type of matrix
+myMat <- as.matrix(Matrix::forceSymmetric(myMat, "U"))
+
+# Set letters with 0.05 as p-value
+LET <- multcompLetters(myMat,
+                       compare="<",
+                       threshold=0.025,
+                       Letters=letters,
+                       reversed = FALSE)
+
+# Display small letters
+LET <- as.data.frame(LET[["Letters"]])
+
+LET$Treatment <- row.names(LET)
+
+LET$Treatment <- gsub("CO2", "+CO2", LET$Treatment)
+LET$Treatment <- stringr::str_replace_all(LET$Treatment, "Light", "-L")
+LET$Treatment <- gsub("Nitrogen", "-N", LET$Treatment)
+LET$Treatment <- gsub("Phosphate", "-P", LET$Treatment)
+LET$Treatment <- gsub("Control", "Cont", LET$Treatment)
+
+
+# Choose location of the letters on the graph
+require(ggbreak)
+coords_letter <- as.data.frame(cbind(values = (dat$div + dat$sd_div), Treatment = dat$Treatment))
+
+
+coords_letter <- merge(LET, coords_letter, by = "Treatment")
+names(coords_letter)[2] <- "p_val"
+coords_letter$values <- as.numeric(coords_letter$values)
+
+
+## 3.6. Producing histograms of the different alpha diversity indices (factor for letter placement 2% for richness = 2. Keep the same for the rest)
+img3 <- ggplot(dat, aes(x = Treatment, y = div)) + 
+  geom_bar(stat="identity", position = position_dodge()) +
+  geom_errorbar(aes(ymin = div-sd_div, ymax = div+sd_div), width=.2,
+                position = position_dodge(.9)) +
+  annotate(geom = "text", x = 4, y = 1.2*max(dat$div), label = paste("H =", test_results$statistic,"; p-val <", test_results$p.value), size = 14/.pt) +
+  annotate(geom = "text", x = coords_letter$Treatment, y = coords_letter$values+0.3, label = coords_letter$p_val, parse = TRUE, size = 18/.pt) +
+  # ylim(0,60) + # Richness
+  # ylim(0,0.40) + # Evenness
+  ylim(0,4.5)+ # Dispersion
+  xlab("Treatment") +
+  ylab("Functional Dispersion") +
+  # ylim(c(0,100)) +
+  scale_x_discrete(limits=rev) +
+  theme_bw() +
+  theme(
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 18)
+  )
+img3
+
+ggsave(file="Functional dispersion.svg", plot=img3, width=12, height=12, units = "cm")
+
+## 3.7. Combine the 3 graphs into a single one (Figure 4)
+alpha_diversity <- ggpubr::ggarrange(img1, img2, img3, ncol = 3, nrow = 1)
+ggsave(file = "alpha_diversity.svg", plot = alpha_diversity, width = 26, height = 26, units = "cm")
+
+
+## 4. Dissimilarity across functional space
+require(hypervolume)
+setwd("C:/Users/ArnaudL/Desktop/Refined functional space/")
+
+## 4.1. Subset main dataset by environmental condition; here example with nitrogen
+temp <- reduced_dim %>%
+  filter(Label == "-Nitrogen")
+
+## 4.2. Perform the hypervolume on the PCA eigenvalues
+resultats <- hypervolume::hypervolume_gaussian(data = temp[, c(12:13)], kde.bandwidth = bw_estimate, quantile.requested = 0.95, quantile.requested.type = "probability")
+
+save(resultats, file = "Whole Nitrogen hypervolume.RData")
+
+rm(reduced_dim, resultats, temp, bw_estimate)
+
+## 4.3. Load each dataset (1 per environmental condition; without the replicates)
+load("Whole Control hypervolume.Rdata")
+Control <- resultats
+
+load("Whole CO2 hypervolume.Rdata")
+CO2 <- resultats
+
+load("Whole Nitrogen hypervolume.Rdata")
+Nitrogen <- resultats
+
+load("Whole Phosphate hypervolume.Rdata")
+Phosphorus <- resultats
+
+load("Whole Light hypervolume.Rdata")
+Light <- resultats
+
+## 4.4. Perform the functional dissimilarities across environmental conditions
+hv <- hypervolume_set(hv1 = Phosphorus, hv2 = CO2, verbose = TRUE, check.memory = FALSE)
+hypervolume_overlap_statistics(hv)
+
+rm(list = ls())
+
+# -> Feed manually an excel sheet with the values
+
+## 4.5. Read the excel sheet previously written 
+dat <- readxl::read_xlsx("Similarity index.xlsx", sheet = "Jaccard similarity")
+
+## 4.6. Conversion into a matrix
+mat <- as.matrix(dat[,-1])
+row.names(mat) <- colnames(mat)
+
+## 4.7. Creation a correlation matrix
+reorder_cormat <- function(cormat){
+  # Use correlation between variables as distance
+  dd <- as.dist((1-cormat)/2)
+  hc <- hclust(dd)
+  cormat <-cormat[hc$order, hc$order]
+}
+
+## 4.8. Get the upper matrix
+get_upper_tri<-function(cormat){
+  cormat[upper.tri(cormat)] <- NA
+  return(cormat)
+}
+
+## 4.9. Reorder the matrix
+mat <- reorder_cormat(mat)
+upper_tri <- get_upper_tri(mat)
+
+melt_mat <- melt(upper_tri, na.rm = TRUE)
+melt_mat$value <- round(melt_mat$value, 2)
+
+# Name the variable
+melt_mat$Var1 <- gsub("CO2", "+CO2", melt_mat$Var1)
+melt_mat$Var1 <- stringr::str_replace_all(melt_mat$Var1, "Light", "-Light")
+melt_mat$Var1 <- gsub("Nitrogen", "-Nitrogen", melt_mat$Var1)
+melt_mat$Var1 <- gsub("Phosphorus", "-Phosphorus", melt_mat$Var1)
+
+melt_mat$Var2 <- gsub("CO2", "+CO2", melt_mat$Var2)
+melt_mat$Var2 <- stringr::str_replace_all(melt_mat$Var2, "Light", "-Light")
+melt_mat$Var2 <- gsub("Nitrogen", "-Nitrogen", melt_mat$Var2)
+melt_mat$Var2 <- gsub("Phosphorus", "-Phosphorus", melt_mat$Var2)
+
+## 4.10. Graphical output
+# Figure 5
+img <- 
+  ggplot(data = melt_mat, aes(x = Var2, y = Var1, fill = value)) + 
+  geom_tile() +
+  geom_text(aes(Var2, Var1, label = value), color = "black", size = 6) +
+  scale_fill_gradient2(low = "snow2", mid = "paleturquoise2", high = "paleturquoise3",
+                       midpoint = 0.5, limit = c(0,1), space = "Lab",
+                       name="Jaccard \nSimilarity") +
+  theme_bw() +
+  xlab("") +
+  ylab("") +
+  coord_fixed() +
+  theme(axis.text.x = element_text(size = 12, family = "Arial", hjust = 1, angle = 35),
+        axis.text.y = element_text(size = 12, family = "Arial")) +
+  guides(fill = guide_colorbar(barwidth = 2, barheight = 10,
+                               title.hjust = 0.5, title.vjust = 5))
+img
+ggsave(file="Jaccard similarity multitraits.svg", plot=img, width=15, height=14, units = "cm")
