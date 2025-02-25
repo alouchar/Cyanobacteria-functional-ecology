@@ -1,5 +1,6 @@
 # Cyanobacteria-functional-ecology
-The code aims at reproducing the analyses and figures presented in the paper titled Functional response of cyanobacteria to environmental changes. These code use the dataset located at:
+The code aims at reproducing the analyses and figures presented in the paper titled Functional response of cyanobacteria to environmental changes. These code use the dataset located at: DOI.
+The code uses R version 4.3.1.
 
 ## Content
   1. License
@@ -20,6 +21,7 @@ The code aims at reproducing the analyses and figures presented in the paper tit
 #### Material and Methods
 
 `Material and Methods.R`
+The scipt details methodological steps necessar to prepare the data.
 
 #### Results
 
