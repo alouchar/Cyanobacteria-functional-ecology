@@ -22,12 +22,18 @@ The code uses R version 4.3.1.
 
 `Material and Methods.R`
 
-The scipt details methodological steps necessar to prepare the data.
+The script details methodological steps necessar to prepare the data.
 
 #### Results
 
 `Results_Flow cytometry traits.R`
 
+The script produces the figure 2.
+
 `Results_Functional analyses from individual level.R`
 
+The script produces the figures 3 and 4.
+
 `Results_Functional assessment of natural communities.R`
+
+The script produces the figure 5. Ensure that you read the data set "DATA" to produce the functional fingerprints.
