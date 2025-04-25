@@ -14,8 +14,8 @@
 # dat contains flow cytometry informations at the individual level for each treatment obtained through the PhytoCytoTraits GUI.
 # Treatment contains informations on the different environmental conditions
 
-dat <- readxl::read_excel("C:/Users/ArnaudL/Desktop/Zhipeng data/FCM data/Combined_data_Zhipeng.xlsx")
-treatment <- readxl::read_excel("C:/Users/ArnaudL/Desktop/Zhipeng data/Treatment.xlsx", sheet = "Sheet2")
+dat <- readxl::read_excel("C:/Users/ArnaudL/Desktop/Zhipeng data/FCM data/Single_cell_FCM_data.xlsx", sheet = "Combined_data")
+treatment <- readxl::read_excel("C:/Users/ArnaudL/Desktop/Zhipeng data/FCM data/Single_cell_FCM_data.xlsx", sheet = "Treatment")
 
 #### 2. CLEANING
 ## 2.1. Identify and rename cyanobacterial cluster. Quick and dirty step to improve.
