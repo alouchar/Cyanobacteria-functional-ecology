@@ -261,6 +261,7 @@ coords_letter$values <- as.numeric(coords_letter$values)
 
 
 ## 3.6. Producing histograms of the different alpha diversity indices (factor for letter placement 2% for richness = 2. Keep the same for the rest)
+# Figures 4.A to 4.C
 img3 <- ggplot(dat, aes(x = Treatment, y = div)) + #replace by rich, even or div
   geom_bar(stat="identity", position = position_dodge()) +
   geom_errorbar(aes(ymin = div-sd_div, ymax = div+sd_div), width=.2, #replace by rich, even or div
@@ -282,7 +283,7 @@ img3 <- ggplot(dat, aes(x = Treatment, y = div)) + #replace by rich, even or div
 
 ggsave(file="Functional dispersion.svg", plot=img3, width=12, height=12, units = "cm") #replace by rich, even or div
 
-## 3.7. Combine the 3 graphs into a single one (Figure 4)
+## 3.7. Combine the 3 graphs into a single one (Figure 4.D)
 alpha_diversity <- ggpubr::ggarrange(img1, img2, img3, ncol = 3, nrow = 1)
 ggsave(file = "alpha_diversity.svg", plot = alpha_diversity, width = 26, height = 26, units = "cm")
 
@@ -349,7 +350,7 @@ melt_mat$Var2 <- gsub("Nitrogen", "-Nitrogen", melt_mat$Var2)
 melt_mat$Var2 <- gsub("Phosphorus", "-Phosphorus", melt_mat$Var2)
 
 ## 4.10. Graphical output
-# Figure 5
+# Figure 4.D
 img <- 
   ggplot(data = melt_mat, aes(x = Var2, y = Var1, fill = value)) + 
   geom_tile() +
