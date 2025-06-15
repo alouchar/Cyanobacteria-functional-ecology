@@ -16,7 +16,7 @@
 # install_github("arleyc/PCAtest")
 
 ## 2.1. Dimension reduction through a Principal Component Analysis
-PCA <- dudi.pca(DATA[,c(1:8)], scannf = FALSE, nf = 7)
+PCA <- dudi.pca(dat[,c(3:10)], scannf = FALSE, nf = 7)
 
 ## 2.2. Quick visualisation of eigenvalues
 screeplot(PCA, main = "Screeplot - Eigenvalues")
@@ -37,7 +37,7 @@ rowSums(100*(factoextra::get_pca_var(PCA)$cos2)[,c(1,2)])
 ## 2.7. Plot PCA Biplot with density curve per environmental conditions (superimposition check between environmental conditions)
 # Figure 3
 p <- ggplot() +
-  geom_point(PCA$li, mapping = aes(x = PCA$li$Axis1, y = PCA$li$Axis2, color = as.factor(DATA$Label)), alpha = 0.3, size = 0.7) +
+  geom_point(PCA$li, mapping = aes(x = PCA$li$Axis1, y = PCA$li$Axis2, color = as.factor(dat$Treatment)), alpha = 0.3, size = 0.7) +
   geom_vline(xintercept = 0, linetype = "dashed", linewidth = 0.5) +
   geom_hline(yintercept = 0, linetype = "dashed", linewidth = 0.5) +
   geom_segment(PCA$co, mapping = aes(x = 0, y = 0, xend = PCA$co$Comp1*3, yend = PCA$co$Comp2*3), col = "grey20",arrow = arrow(length = unit(0.02, "npc"))) +
@@ -47,7 +47,7 @@ p <- ggplot() +
   xlim(c(-9,9)) +
   ylim(c(-9,9)) +
   theme_linedraw() +
-  scale_color_d3(name = as.factor(DATA$Label)) +
+  scale_color_d3(name = as.factor(dat$Treatment)) +
   theme(legend.position = "bottom",
         legend.title=element_blank(),
         axis.text=element_text(size=12),
@@ -61,10 +61,10 @@ pca_marg
 
 ggsave(file="PCA_density.svg", plot=pca_marg, width=16, height=16, units = "cm", dpi = 400)
 
-rm(heatmap, NOM, num_mat, treatment)
+rm(heatmap, NOM, num_mat)
 
 # 2.8. PCA eigenvalues dataframe binded with environmental conditions and replicate
-reduced_dim <- as.data.frame(cbind(DATA, PCA$li$Axis1, PCA$li$Axis2, PCA$li$Axis3, PCA$li$Axis4))
+reduced_dim <- as.data.frame(cbind(dat, PCA$li$Axis1, PCA$li$Axis2, PCA$li$Axis3, PCA$li$Axis4))
 
 names(reduced_dim)[11] <- "PCA1"
 names(reduced_dim)[12] <- "PCA2"
@@ -81,16 +81,15 @@ my_theme <- theme(axis.text=element_text(size=10),
 
 rm(list = setdiff(ls(),"reduced_dim"))
 
-saveRDS(reduced_dim, "reduced_dim.rds")
-reduced_dim <- readRDS("N:/NIOO-Data/Dep.AqE/Staging/van de Waal_group/Zhipeng data/reduced_dim.rds")
 
 ## 2.9. Delineation of multidimensional functional space
 
 # The methodology relies on the probabilistic hypervolume since it considers abundance thus being less sensitive to outliers
 bw_estimate <- hypervolume::estimate_bandwidth(reduced_dim[, c("PCA1","PCA2")], method = "cross-validation")
 
+#### The steps 3.1 and 3.2 display the code for the phosphorus treatment. Replace phosphate by nitrogen, control, light and CO2 to produce the results for these treatments
 
-## 3. Computation of functional diversity indices based on functional hypervolume
+## 3. Computation of functional diversity indices based on functional hypervolume (step 3.1 and 3.2 are quite long, may takes several days for one treatment)
 ## 3.1. Code optimization running foreach function on 4 cores
 require(foreach)
 require(doSNOW)
@@ -107,10 +106,10 @@ registerDoSNOW(cl)
 
 # Subset by environmental condition. Here an example with phosphorus limitation
 temp <- reduced_dim %>%
-  filter(Label == "-Phosphate")
+  filter(Treatment == "-Phosphate")
 
 # Define the unique replicates
-replicat <- unique(temp$filename)
+replicat <- unique(temp$Replicate)
 
 # Set a progression bar
 pb <- txtProgressBar(max = length(replicat), style = 3)
@@ -122,39 +121,36 @@ results <- foreach(l = 1:length(replicat), .combine = c,.options.snow = opts) %d
   DATA <- temp[temp$filename == replicat[l], ]
   
   # Producing hypervolume for each replicate within the treatment
-  hypervolume::hypervolume_gaussian(data = DATA[, c(12:13)], kde.bandwidth = bw_estimate, quantile.requested = 0.95, quantile.requested.type = "probability")
+  hypervolume::hypervolume_gaussian(data = DATA[, c(11:12)], kde.bandwidth = bw_estimate, quantile.requested = 0.95, quantile.requested.type = "probability")
 }
 
 # Stop the progression bar
 close(pb)
-phosphate_vol <- hypervolume_join(results)
+phosphorus_vol <- hypervolume_join(results)
 
 # Saving the hypervolume data
-save(phosphate_vol, file = "Phosphate hypervolume.RData")
+save(phosphorus_vol, file = "Phosphorus hypervolume.RData")
 
 # Stop the parallel cluster
 stopCluster(cl)
 
 # Load the data previously saved. Example with control conditions
-load("Control hypervolume.Rdata")
+load("Phosphorus hypervolume.Rdata")
 
 ## 3.2. Computation of functional diversity indices from the hypervolume
-Control <- data.frame(
-  Treatment = "Control",
-  rich = kernel.alpha(Control_vol),
-  even = kernel.evenness(Control_vol),
-  div = kernel.dispersion(Control_vol)
+Phosphorus <- data.frame(
+  Treatment = "Phosphorus",
+  rich = kernel.alpha(phosphorus_vol),
+  even = kernel.evenness(phosphorus_vol),
+  div = kernel.dispersion(phosphorus_vol)
 )
 
-# Save the indices on a csv file
-write.table(Control, "Control.csv", row.names = FALSE, sep= ";", dec = ',')
+# Combine all into one data frame
+Functional_rep_space_microcystis <- rbind(Phosphorus, Control, CO2, Light, Nitrogen)
 
-## 3.3. Kruskal-Wallis test
-setwd("C:/Users/ArnaudL/Desktop/Refined functional space/")
+## 3.3. Read the excel sheet that resume the results 
+dat <- readxl::read_xlsx("IndCyano_Louchart_Limitation_experiement_June2025.xlsx", sheet = "Functional_rep_space_microcystis")
 
-alpha <- readxl::read_xlsx("Alpha_indices.xlsx")
-
-Functional_rep_space_microcystis <- alpha[c(1:20),]
 
 data_summary <- function(data, varname, groupnames){
   require(plyr)
@@ -177,7 +173,10 @@ alpha_func$Treatment <- gsub("Phosphate", "-P", alpha_func$Treatment)
 alpha_func$Treatment <- gsub("Control", "Cont", alpha_func$Treatment)
 
 
-# dat <- alpha_func
+dat <- alpha_func
+
+## Run from this line (l175) to l279 3 times: 1) functional richness, 2) functional evenness and 3) functional divergence.
+# Replace the column names accordingly
 dat <- cbind(dat,alpha_func)
 
 dat <- dat[,-c(4,7)]
@@ -186,17 +185,17 @@ names(dat)[3] <- "sd_rich"
 names(dat)[5] <- "sd_even"
 names(dat)[7] <- "sd_div"
 
-rm(list = setdiff(ls(),c('dat',"alpha")))
+rm(list = setdiff(ls(),c('dat',"Functional_rep_space_microcystis")))
 
 
-test_results <- kruskal.test(div ~ Treatment, data = alpha)
+test_results <- kruskal.test(div ~ Treatment, data = alpha) #replace by rich, even or div
 test_results$statistic <- round(test_results$statistic, 2)
 test_results$p.value <- round(test_results$p.value, 3)
 
 
 ## 3.4. Conover post-hoc test
 require(conover.test)
-post_hoc <- conover.test(alpha$div, alpha$Treatment, kw = FALSE, alpha = 0.05, label = TRUE, list = FALSE, method="bh")
+post_hoc <- conover.test(alpha$div, alpha$Treatment, kw = FALSE, alpha = 0.05, label = TRUE, list = FALSE, method="bh") #replace by rich, even or div
 
 
 ## 3.5. Extract pairwise significance as letters
@@ -253,7 +252,7 @@ LET$Treatment <- gsub("Control", "Cont", LET$Treatment)
 
 # Choose location of the letters on the graph
 require(ggbreak)
-coords_letter <- as.data.frame(cbind(values = (dat$div + dat$sd_div), Treatment = dat$Treatment))
+coords_letter <- as.data.frame(cbind(values = (dat$div + dat$sd_div), Treatment = dat$Treatment)) #replace by rich, even or div
 
 
 coords_letter <- merge(LET, coords_letter, by = "Treatment")
@@ -262,17 +261,17 @@ coords_letter$values <- as.numeric(coords_letter$values)
 
 
 ## 3.6. Producing histograms of the different alpha diversity indices (factor for letter placement 2% for richness = 2. Keep the same for the rest)
-img3 <- ggplot(dat, aes(x = Treatment, y = div)) + 
+img3 <- ggplot(dat, aes(x = Treatment, y = div)) + #replace by rich, even or div
   geom_bar(stat="identity", position = position_dodge()) +
-  geom_errorbar(aes(ymin = div-sd_div, ymax = div+sd_div), width=.2,
+  geom_errorbar(aes(ymin = div-sd_div, ymax = div+sd_div), width=.2, #replace by rich, even or div
                 position = position_dodge(.9)) +
-  annotate(geom = "text", x = 4, y = 1.2*max(dat$div), label = paste("H =", test_results$statistic,"; p-val <", test_results$p.value), size = 14/.pt) +
+  annotate(geom = "text", x = 4, y = 1.2*max(dat$div), label = paste("H =", test_results$statistic,"; p-val <", test_results$p.value), size = 14/.pt) + #replace by rich, even or div
   annotate(geom = "text", x = coords_letter$Treatment, y = coords_letter$values+0.3, label = coords_letter$p_val, parse = TRUE, size = 18/.pt) +
-  # ylim(0,60) + # Richness
-  # ylim(0,0.40) + # Evenness
-  ylim(0,4.5)+ # Dispersion
+  # ylim(0,60) + # Only for richness
+  # ylim(0,0.40) + # Only for Evenness
+  ylim(0,4.5)+ # Only for Dispersion
   xlab("Treatment") +
-  ylab("Functional Dispersion") +
+  ylab("Functional Dispersion") + #replace by rich, even or div
   # ylim(c(0,100)) +
   scale_x_discrete(limits=rev) +
   theme_bw() +
@@ -280,9 +279,8 @@ img3 <- ggplot(dat, aes(x = Treatment, y = div)) +
     axis.text = element_text(size = 12),
     axis.title = element_text(size = 18)
   )
-img3
 
-ggsave(file="Functional dispersion.svg", plot=img3, width=12, height=12, units = "cm")
+ggsave(file="Functional dispersion.svg", plot=img3, width=12, height=12, units = "cm") #replace by rich, even or div
 
 ## 3.7. Combine the 3 graphs into a single one (Figure 4)
 alpha_diversity <- ggpubr::ggarrange(img1, img2, img3, ncol = 3, nrow = 1)
@@ -291,37 +289,20 @@ ggsave(file = "alpha_diversity.svg", plot = alpha_diversity, width = 26, height 
 
 ## 4. Dissimilarity across functional space
 require(hypervolume)
-setwd("C:/Users/ArnaudL/Desktop/Refined functional space/")
 
 ## 4.1. Subset main dataset by environmental condition; here example with nitrogen
 temp <- reduced_dim %>%
   filter(Label == "-Nitrogen")
 
 ## 4.2. Perform the hypervolume on the PCA eigenvalues
-resultats <- hypervolume::hypervolume_gaussian(data = temp[, c(12:13)], kde.bandwidth = bw_estimate, quantile.requested = 0.95, quantile.requested.type = "probability")
+Nitrogen <- hypervolume::hypervolume_gaussian(data = temp[, c(12:13)], kde.bandwidth = bw_estimate, quantile.requested = 0.95, quantile.requested.type = "probability")
 
 save(resultats, file = "Whole Nitrogen hypervolume.RData")
 
 rm(reduced_dim, resultats, temp, bw_estimate)
 
-## 4.3. Load each dataset (1 per environmental condition; without the replicates)
-load("Whole Control hypervolume.Rdata")
-Control <- resultats
-
-load("Whole CO2 hypervolume.Rdata")
-CO2 <- resultats
-
-load("Whole Nitrogen hypervolume.Rdata")
-Nitrogen <- resultats
-
-load("Whole Phosphate hypervolume.Rdata")
-Phosphorus <- resultats
-
-load("Whole Light hypervolume.Rdata")
-Light <- resultats
-
-## 4.4. Perform the functional dissimilarities across environmental conditions
-hv <- hypervolume_set(hv1 = Phosphorus, hv2 = CO2, verbose = TRUE, check.memory = FALSE)
+## 4.3. Perform the functional dissimilarities across environmental conditions
+hv <- hypervolume_set(hv1 = Nitrogen, hv2 = CO2, verbose = TRUE, check.memory = FALSE) ### Run the comparison one by one, between each treatment. Step to automatise
 hypervolume_overlap_statistics(hv)
 
 rm(list = ls())
@@ -329,7 +310,7 @@ rm(list = ls())
 # -> Feed manually an excel sheet with the values
 
 ## 4.5. Read the excel sheet previously written 
-dat <- readxl::read_xlsx("Similarity index.xlsx", sheet = "Jaccard similarity")
+dat <- readxl::read_xlsx("IndCyano_Louchart_Limitation_experiement_June2025.xlsx.xlsx", sheet = "Jaccard similarity")
 
 ## 4.6. Conversion into a matrix
 mat <- as.matrix(dat[,-1])
