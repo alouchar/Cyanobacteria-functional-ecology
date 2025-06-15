@@ -311,7 +311,7 @@ rm(list = ls())
 # -> Feed manually an excel sheet with the values
 
 ## 4.5. Read the excel sheet previously written 
-dat <- readxl::read_xlsx("IndCyano_Louchart_Limitation_experiement_June2025.xlsx.xlsx", sheet = "Jaccard similarity")
+dat <- readxl::read_xlsx("IndCyano_Louchart_Limitation_experiement_June2025.xlsx", sheet = "Jaccard similarity")
 
 ## 4.6. Conversion into a matrix
 mat <- as.matrix(dat[,-1])
