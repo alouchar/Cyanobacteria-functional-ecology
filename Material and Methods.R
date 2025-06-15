@@ -16,12 +16,6 @@
 
 dat <- readxl::read_excel("D:/Manuscript/Cyanobacterial traits - Louchart - 2025/Manuscript/IndCyano_Louchart_Limitation_experiement_June2025.xlsx", sheet = "IndTraits")
 
-## 1.1. Renaming treatments
-dat$Treatment <- gsub("CO2", "+CO2", dat$Treatment)
-dat$Treatment <- stringr::str_replace_all(dat$Treatment, "Light", "-Light")
-dat$Treatment <- gsub("Nitrogen", "-Nitrogen", dat$Treatment)
-dat$Treatment <- gsub("Phosphorus", "-Phosphorus", dat$Treatment)
-
 #### 2 DATA MANIPULATION
 ## 2.1. Log10 transformation
 dat[,c(3:10)] <- log10(dat[,c(3:10)])
