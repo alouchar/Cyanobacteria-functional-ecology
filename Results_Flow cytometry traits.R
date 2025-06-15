@@ -13,8 +13,8 @@
 #### PRODUCTION OF GRAPHICAL AND NUMERICAL OUTPUTS AS WELL AS INTERMEDIATE DATASETS
 ## 1. Flow cytometry traits
 ## 1.1. Correlation matrix between traits to identify collinearity (supplementary material figure 2)
-res <- cor(DATA[,c(1:8)])
-p.mat <- cor.mtest(DATA[,c(1:8)])
+res <- cor(dat[,c(3:10)])
+p.mat <- cor.mtest(dat[,c(3:10)])
 
 svg(filename = "Trait correlation matrix.svg", width=6, height=6, pointsize = 12, family = "sans")
 corrplot(res, method = "shade", shade.col = NA,
@@ -28,20 +28,20 @@ rm(res, p.mat)
 
 ## 1.2. Heatmap of cyanobacterial traits across environmental conditions (Figure 2)
 # Compute average values by environmental condition and replicate
-dat <- DATA %>%
-  group_by(Label, filename) %>%
+DAT <- dat %>%
+  group_by(Treatment, Replicate) %>%
   summarise_all(mean)
 
 # Convert the data as a matrix
-num_mat <- as.matrix(sapply(dat[,c(3:10)], as.numeric))
+num_mat <- as.matrix(sapply(DAT[,c(3:10)], as.numeric))
 
 # Recode Label and filename
-dat$Label <- recode(dat$Label, "-Light" = "-L", "-Nitrogen" = "-N","-Phosphorus" = "-P", "Control"  = "Cont")
-dat$filename <- recode(dat$filename, "Replicate 1" = "R1", "Replicate 2" = "R2","Replicate 3" = "R3", "Replicate 4"  = "R4")
+DAT$Treatment <- recode(DAT$Treatment, "-Light" = "-L", "-Nitrogen" = "-N","-Phosphorus" = "-P", "Control"  = "Cont")
+DAT$Replicate <- recode(DAT$Replicate, "Replicate 1" = "R1", "Replicate 2" = "R2","Replicate 3" = "R3", "Replicate 4"  = "R4")
 
 # Aggregate columns "Environmental condition" + "Replicate" with a space in between
-dat$name <- apply(dat[,c("Label","filename")], 1, paste, collapse = " ")
-NOM <- as.vector(dat[,11])
+DAT$name <- apply(DAT[,c("Treatment","Replicate")], 1, paste, collapse = " ")
+NOM <- as.vector(DAT[,11])
 
 # Display row names of the matrix as "environmental condition" + "Replicate"
 rownames(num_mat) <- NOM[["name"]]
