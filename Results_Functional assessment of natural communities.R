@@ -9,10 +9,12 @@
 #############################################################################
 ############################## RESULTS SECTION ##############################
 #############################################################################
+dat <- readxl::read_excel("D:/Manuscript/Cyanobacterial traits - Louchart - 2025/Manuscript/IndCyano_Louchart_Limitation_experiement_June2025.xlsx", sheet = "IndTraits")
+
 Ref_transform_average <- 
   DATA %>%
   group_by(Label) %>%
-  dplyr::summarise(across(c(`FSC [Par]`,SSC, `692/40[488]`, `670/30[640]`, Fill_SSC, PC_size, Chla_size, PC_Chla), mean))
+  dplyr::summarise(across(c('Cell size', Granularity, Chlorophyll-a, 'Gas vesicle','PC per size unit', 'Chla per size unit', 'PC:Chla ratio'), mean))
 
 #### FUNCTIONAL ASSESSMENT OF NATURAL COMMUNITIES
 dat <- readxl::read_xlsx("C:/Users/ArnaudL/Desktop/BloomTox/Temporal FCM/Data/Natural community Netherlands 2023.xlsx", sheet = "Abundance")
