@@ -1,9 +1,9 @@
 #`---
-#`Authors: Arnaud Louchart, Annemieke Drost, Harley Lin, Suzanne Wiezer, Zhipeng Duan, Dedmer B. Van de Waal
+#`Authors: Arnaud P. Louchart, Annemieke M. Drost, Chaohong Lin, Suzanne M.H. Wiezer, Zhipeng Duan, Elena Litchman, Dedmer B. Van de Waal
 #`Title: Individual-level trait responses in natural cyanobacterial communities.
-#`Year: 202X
-#`Journal: Functional Ecology
-#`Status: Writing
+#`Year: 2025
+#`Journal: Ecology Letters
+#`Status: First submission
 #`---
 
 ##############################################################################
