@@ -24,16 +24,24 @@ The code uses R version 4.3.1.
 
 The script details methodological steps necessar to prepare the data. The script produce figure 1 panels B to F.
 
+Dataset: none
+
 #### Results
 
 `Results_Flow cytometry traits.R`
 
 The script produces the figure 2.
 
+Dataset: IndTraits
+
 `Results_Functional analyses from individual level.R`
 
-The script produces the figures 3 and 4.
+The script produces the figures 3 and 4. From Line 175 the code runs only for one treatment. 
+
+Datasets: IndTraits, Functional_rep_space_microcysti, Jaccard similarity
 
 `Results_Functional assessment of natural communities.R`
 
 The script produces the figure 5. Ensure that you read the data set "DATA" to produce the functional fingerprints.
+
+Datasets: IndTraits, CommTraits
