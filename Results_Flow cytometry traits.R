@@ -46,7 +46,7 @@ NOM <- as.vector(DAT[,11])
 # Display row names of the matrix as "environmental condition" + "Replicate"
 rownames(num_mat) <- NOM[["name"]]
 
-# Producing the graphical outputs
+# Producing the graphical outputs (figure 2)
 heatmap <- pheatmap(num_mat, cutree_rows = 5, cutree_cols = 4, fontsize = 16, angle_col = "45", color = colorRampPalette(c("darkblue", "white", "darkred"))(200))
 
 svg(filename = "Heatmap_filters_treatments.svg",width=7, height=7, family = "sans", pointsize = 12)
