@@ -149,7 +149,7 @@ Phosphorus <- data.frame(
 Functional_rep_space_microcystis <- rbind(Phosphorus, Control, CO2, Light, Nitrogen)
 
 ## 3.3. Read the excel sheet that resume the results 
-dat <- readxl::read_xlsx("IndCyano_Louchart_Limitation_experiement_June2025.xlsx", sheet = "Functional_rep_space_microcystis")
+dat <- readxl::read_xlsx("IndCyano_Louchart_Limitation_experiment_June2025.xlsx", sheet = "Functional_rep_space_microcystis")
 
 
 data_summary <- function(data, varname, groupnames){
@@ -311,7 +311,7 @@ rm(list = ls())
 # -> Feed manually an excel sheet with the values
 
 ## 4.5. Read the excel sheet previously written 
-dat <- readxl::read_xlsx("IndCyano_Louchart_Limitation_experiement_June2025.xlsx", sheet = "Jaccard similarity")
+dat <- readxl::read_xlsx("IndCyano_Louchart_Limitation_experiment_June2025.xlsx", sheet = "Jaccard similarity")
 
 ## 4.6. Conversion into a matrix
 mat <- as.matrix(dat[,-1])
