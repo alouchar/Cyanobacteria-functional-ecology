@@ -38,7 +38,7 @@ Dataset: IndTraits
 
 The script produces the figures 3 and 4. From Line 175 the code runs only for one treatment. 
 
-Datasets: IndTraits, Functional_rep_space_microcysti, Jaccard similarity
+Dataset: IndTraits
 
 `Results_Functional assessment of natural communities.R`
 
