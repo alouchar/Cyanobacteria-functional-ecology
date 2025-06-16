@@ -14,7 +14,7 @@ require(ggpmisc)
 
 ## 6. Formating functional fingerprints
 # 6.1. Reload the functional responses of Microcystis obtained at the individual level
-dat <- readxl::read_excel("IndCyano_Louchart_Limitation_experiement_June2025.xlsx", sheet = "IndTraits")
+dat <- readxl::read_excel("IndCyano_Louchart_Limitation_experiment_June2025.xlsx", sheet = "IndTraits")
 
 # 6.2. Compute the average functional responses of Microcystis
 Ref_transform_average <- 
@@ -27,7 +27,7 @@ Ref_transform_average[,c(2:9)] <- log10(Ref_transform_average[,c(2:9)])
 Ref_transform_average[,c(2:9)] <- scale(Ref_transform_average[,c(2:9)], center = TRUE, scale = TRUE)
 
 ## 7. Functional assessment of natural communities
-CommTraits <- readxl::read_excel("IndCyano_Louchart_Limitation_experiement_June2025.xlsx", sheet = "CommTraits")
+CommTraits <- readxl::read_excel("IndCyano_Louchart_Limitation_experiment_June2025.xlsx", sheet = "CommTraits")
 CommTraits$Date <- as.Date(CommTraits$Date, format = "%d-%m-%Y")
 
 # 7.1. Log10 transformation and normalisation
