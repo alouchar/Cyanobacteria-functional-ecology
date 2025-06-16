@@ -24,7 +24,7 @@ The code uses R version 4.3.1.
 
 The script details methodological steps necessar to prepare the data. The script produce figure 1 panels B to F.
 
-Dataset: none
+Dataset: IndTraits
 
 #### Results
 
