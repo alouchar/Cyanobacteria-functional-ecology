@@ -48,4 +48,32 @@ Datasets: IndTraits, CommTraits
 
 ## List of packages and versions
 
-<pre lang="markdown"> ## 📦 Required R Packages and Versions ```r # ==== Required Packages and Versions ==== # ggConvexHull 0.1.0 # svMisc 1.2.3 # dplyr 1.1.3 # ggplot2 3.5.1 # RColorBrewer 1.1-3 # ggrepel 0.9.4 # devtools 2.4.5 # PCAtest 0.0.1 # tidyr 1.3.0 # ggsci 3.0.0 # tictoc 1.2 # BAT 2.9.6 # reshape2 1.4.4 # ggpubr 0.6.0 # pheatmap 1.0.12 # hypervolume 3.1.3 # alphahull 2.5 # ade4 1.7-22 # ggExtra 0.10.1 # corrplot 0.92 # tidyverse 2.0.0 # ggnewscale 0.4.10 # ggpmisc 0.5.4-1 # scales 1.3.0 # cowplot 1.1.3 ``` </pre>
+```r
+# ==== Required Packages and Versions ====
+
+# ggConvexHull      0.1.0
+# svMisc            1.2.3
+# dplyr             1.1.3
+# ggplot2           3.5.1
+# RColorBrewer      1.1-3
+# ggrepel           0.9.4
+# devtools          2.4.5
+# PCAtest           0.0.1
+# tidyr             1.3.0
+# ggsci             3.0.0
+# tictoc            1.2
+# BAT               2.9.6
+# reshape2          1.4.4
+# ggpubr            0.6.0
+# pheatmap          1.0.12
+# hypervolume       3.1.3
+# alphahull         2.5
+# ade4              1.7-22
+# ggExtra           0.10.1
+# corrplot          0.92
+# tidyverse         2.0.0
+# ggnewscale        0.4.10
+# ggpmisc           0.5.4-1
+# scales            1.3.0
+# cowplot           1.1.3
+```
