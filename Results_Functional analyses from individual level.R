@@ -312,24 +312,19 @@ plot_alpha <- function(metric_name, y_label, letters_df) {
   dat <- alpha_func[alpha_func$metric == metric_name, ]
   dat$Treatment <- as.character(dat$Treatment)
   
-  treatment_order <- c("Control", "+CO2", "-Phosphorus", "-Nitrogen", "-Light")
-  dat$Treatment <- factor(dat$Treatment, levels = treatment_order)
+  Treatment <- c("-Light", "-Nitrogen", "-Phosphorus", "+CO2", "Control")
   
   # Merge letters
   coords <- merge(dat, letters_df, by = "Treatment", all.x = TRUE)
   coords$y <- 1.05 * coords$mean + coords$sd   # adjust height for letters
   
-  axis_labels <- c(
-    expression(Control),
-    expression("+CO"[2]),
-    expression("-Phosphorus"),
-    expression("-Nitrogen"),
-    expression("-Light")
-  )
-  
-  # Map colors from ggsci palette
-  treatment_colors <- ggsci::pal_d3("category20")(length(unique(dat$Treatment)))
+  # Assign colors for axis labels using ggsci palette
+  treatment_colors <- ggsci::pal_d3("category20")(length(Treatment))
   names(treatment_colors) <- levels(dat$Treatment)
+  
+  # Replace +CO2 with proper subscript for axis labels
+  axis_labels <- Treatment
+  axis_labels[axis_labels == "+CO2"] <- expression("+CO"[2])
   
   # Base bar plot
   p <- ggplot(dat, aes(x = Treatment, y = mean, fill = Treatment)) +
@@ -466,4 +461,5 @@ p <- plot_grid(top, bot, ncol =1)
 p
 
 ggsave(file="Functional diversity.svg", plot=p, width=20, height=20, units = "cm")
+
 
