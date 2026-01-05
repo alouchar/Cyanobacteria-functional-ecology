@@ -36,7 +36,7 @@ DAT <- dat %>%
 num_mat <- as.matrix(sapply(DAT[,c(3:10)], as.numeric))
 
 # Recode Label and filename
-DAT$Treatment <- recode(DAT$Treatment, "-Light" = "-L", "-Nitrogen" = "-N","-Phosphorus" = "-P", "Control"  = "Cont")
+DAT$Treatment <- recode(DAT$Treatment, "-Light" = "-L", "-Nitrogen" = "-N","-Phosphorus" = "-P", "Control"  = "Control")
 DAT$Replicate <- recode(DAT$Replicate, "Replicate 1" = "R1", "Replicate 2" = "R2","Replicate 3" = "R3", "Replicate 4"  = "R4")
 
 # Aggregate columns "Environmental condition" + "Replicate" with a space in between
@@ -52,3 +52,4 @@ heatmap <- pheatmap(num_mat, cutree_rows = 5, cutree_cols = 4, fontsize = 16, an
 svg(filename = "Heatmap_filters_treatments.svg",width=7, height=7, family = "sans", pointsize = 12)
 heatmap
 dev.off()
+
