@@ -82,10 +82,6 @@ my_theme <- theme(axis.text=element_text(size=10),
 rm(list = setdiff(ls(),"reduced_dim"))
 
 
-## 2.9. Delineation of multidimensional functional space
-
-
-
 ## 3. Computation of functional diversity indices based on functional hypervolumes
 ## Steps 3.1 and 3.2 are computationally intensive and may require several days per treatment depending on data size.
 # The methodology relies on the probabilistic hypervolume since it considers abundance thus being less sensitive to outliers
@@ -97,6 +93,7 @@ library(doSNOW)
 library(progress)
 library(hypervolume)
 
+# Delineation of multidimensional functional space
 bw_estimate <- hypervolume::estimate_bandwidth(reduced_dim[, c("PCA1","PCA2")], method = "cross-validation")
 
 # List of environmental treatments to be analysed
@@ -469,3 +466,4 @@ p <- plot_grid(top, bot, ncol =1)
 p
 
 ggsave(file="Functional diversity.svg", plot=p, width=20, height=20, units = "cm")
+
