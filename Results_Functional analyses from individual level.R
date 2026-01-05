@@ -89,204 +89,219 @@ bw_estimate <- hypervolume::estimate_bandwidth(reduced_dim[, c("PCA1","PCA2")], 
 
 #### The steps 3.1 and 3.2 display the code for the phosphorus treatment. Replace phosphate by nitrogen, control, light and CO2 to produce the results for these treatments
 
-## 3. Computation of functional diversity indices based on functional hypervolume (step 3.1 and 3.2 are quite long, may takes several days for one treatment)
-## 3.1. Code optimization running foreach function on 4 cores
-require(foreach)
-require(doSNOW)
-require(progress)
+## 3. Computation of functional diversity indices based on functional hypervolumes
+## Steps 3.1 and 3.2 are computationally intensive and may require several days per treatment depending on data size.
 
-# adjust the number of core to use
+## 3.1. Hypervolume computation parallelized using foreach on multiple CPU cores
+library(dplyr)
+library(foreach)
+library(doSNOW)
+library(progress)
+library(hypervolume)
+
+# List of environmental treatments to be analysed
+treatments <- c("-Phosphate", "-Nitrogen", "Control", "Light", "CO2")
+
+# Adjust the number of CPU cores according to available resources
 num_cores <- 2
 
-# Create a parallel cluster
+# Create and register a parallel cluster
 cl <- makeCluster(num_cores)
-
-# Save the cluster to use in foreach loop
 registerDoSNOW(cl)
 
-# Subset by environmental condition. Here an example with phosphorus limitation
-temp <- reduced_dim %>%
-  filter(Treatment == "-Phosphate")
+# Function computing the hypervolume and diversity indices for a single treatment
+compute_hypervolume_treatment <- function(tr, data, bw) {
 
-# Define the unique replicates
-replicat <- unique(temp$Replicate)
+  message("Processing treatment: ", tr)
 
-# Set a progression bar
-pb <- txtProgressBar(max = length(replicat), style = 3)
-progress <- function(n) setTxtProgressBar(pb, n)
-opts <- list(progress = progress)
+  # Output file used to store intermediate results
+  outfile <- paste0("hypervolume_", tr, ".RData")
 
-# Loop parallelisation
-results <- foreach(l = 1:length(replicat), .combine = c,.options.snow = opts) %dopar% {
-  DATA <- temp[temp$filename == replicat[l], ]
-  
-  # Producing hypervolume for each replicate within the treatment
-  hypervolume::hypervolume_gaussian(data = DATA[, c(11:12)], kde.bandwidth = bw_estimate, quantile.requested = 0.95, quantile.requested.type = "probability")
+  # Hypervolumes are computed only if they do not already exist
+  if (!file.exists(outfile)) {
+
+    # Subset data for the selected environmental treatment
+    temp <- data %>% filter(Treatment == tr)
+
+    # Identify unique biological replicates
+    replicates <- unique(temp$Replicate)
+
+    # Initialize a progress bar
+    pb <- txtProgressBar(max = length(replicates), style = 3)
+    progress <- function(n) setTxtProgressBar(pb, n)
+    opts <- list(progress = progress)
+
+    # Parallel loop: one hypervolume per replicate
+    hv_list <- foreach(
+      i = seq_along(replicates),
+      .combine = c,
+      .options.snow = opts,
+      .packages = "hypervolume"
+    ) %dopar% {
+
+      DATA <- temp[temp$Replicate == replicates[i], ]
+
+      # Construction of probabilistic Gaussian hypervolumes
+      hypervolume::hypervolume_gaussian(
+        data = DATA[, c("PCA1", "PCA2")],
+        kde.bandwidth = bw,
+        quantile.requested = 0.95,
+        quantile.requested.type = "probability"
+      )
+    }
+
+    # Close the progress bar
+    close(pb)
+
+    # Merge replicate-level hypervolumes into a treatment-level hypervolume
+    hv <- hypervolume_join(hv_list)
+
+    # Save hypervolume object to avoid recomputation
+    save(hv, file = outfile)
+
+  } else {
+    # Load previously computed hypervolume
+    load(outfile)
+  }
+
+## 3.2. Computation of functional diversity indices from the treatment-level hypervolume
+  data.frame(
+    Treatment = tr,
+    rich = kernel.alpha(hv),        # Functional richness
+    even = kernel.evenness(hv),     # Functional evenness
+    div  = kernel.dispersion(hv)    # Functional dispersion
+  )
 }
 
-# Stop the progression bar
-close(pb)
-phosphorus_vol <- hypervolume_join(results)
-
-# Saving the hypervolume data
-save(phosphorus_vol, file = "Phosphorus hypervolume.RData")
-
-# Stop the parallel cluster
-stopCluster(cl)
-
-# Load the data previously saved. Example with control conditions
-load("Phosphorus hypervolume.Rdata")
-
-## 3.2. Computation of functional diversity indices from the hypervolume
-Phosphorus <- data.frame(
-  Treatment = "Phosphorus",
-  rich = kernel.alpha(phosphorus_vol),
-  even = kernel.evenness(phosphorus_vol),
-  div = kernel.dispersion(phosphorus_vol)
+## 3.3. Run the analysis for all environmental treatments
+Functional_rep_space_microcystis <- do.call(
+  rbind,
+  lapply(
+    treatments,
+    compute_hypervolume_treatment,
+    data = reduced_dim,
+    bw   = bw_estimate
+  )
 )
 
-# Combine all into one data frame
-Functional_rep_space_microcystis <- rbind(Phosphorus, Control, CO2, Light, Nitrogen)
+stopCluster(cl)
 
-## 3.3. Read the excel sheet that resume the results 
+## 3.4. Read the excel sheet that resume the results 
 dat <- readxl::read_xlsx("IndCyano_Louchart_Limitation_experiment_June2025.xlsx", sheet = "Functional_rep_space_microcystis")
 
 
+metrics <- c("rich", "even", "div")  # metrics to compute
+
+# Function to compute summary stats
 data_summary <- function(data, varname, groupnames){
-  require(plyr)
   summary_func <- function(x, col){
     c(mean = mean(x[[col]], na.rm=TRUE),
-      sd = sd(x[[col]], na.rm=TRUE))
+      sd   = sd(x[[col]], na.rm=TRUE))
   }
-  data_sum<-ddply(data, groupnames, .fun=summary_func,
-                  varname)
+  data_sum <- ddply(data, groupnames, .fun=summary_func, varname)
   data_sum <- rename(data_sum, c("mean" = varname))
   return(data_sum)
 }
 
-alpha_func <- data_summary(data = Functional_rep_space_microcystis, varname = "div", groupnames = "Treatment")
+# Initialize list to store plots
+plot_list <- list()
 
-alpha_func$Treatment <- gsub("CO2", "+CO2", alpha_func$Treatment)
-alpha_func$Treatment <- stringr::str_replace_all(alpha_func$Treatment, "Light", "-L")
-alpha_func$Treatment <- gsub("Nitrogen", "-N", alpha_func$Treatment)
-alpha_func$Treatment <- gsub("Phosphate", "-P", alpha_func$Treatment)
-alpha_func$Treatment <- gsub("Control", "Cont", alpha_func$Treatment)
+# Loop over each metric
+for (met in metrics){
 
-
-dat <- alpha_func
-
-## Run from this line (l175) to l279 3 times: 1) functional richness, 2) functional evenness and 3) functional divergence.
-# Replace the column names accordingly
-dat <- cbind(dat,alpha_func)
-
-dat <- dat[,-c(4,7)]
-
-names(dat)[3] <- "sd_rich"
-names(dat)[5] <- "sd_even"
-names(dat)[7] <- "sd_div"
-
-rm(list = setdiff(ls(),c('dat',"Functional_rep_space_microcystis")))
-
-
-test_results <- kruskal.test(div ~ Treatment, data = alpha) #replace by rich, even or div
-test_results$statistic <- round(test_results$statistic, 2)
-test_results$p.value <- round(test_results$p.value, 3)
-
-
-## 3.4. Conover post-hoc test
-require(conover.test)
-post_hoc <- conover.test(alpha$div, alpha$Treatment, kw = FALSE, alpha = 0.05, label = TRUE, list = FALSE, method="bh") #replace by rich, even or div
-
-
-## 3.5. Extract pairwise significance as letters
-v <- as.data.frame(cbind(comparisons = post_hoc$comparisons, p_val = post_hoc$P.adjusted*2))
-require(stringr)
-
-v[c('Treatment 1','Treatment 2')] <- str_split_fixed(v$comparisons, " - ", 2)
-v <- v[,-1]
-
-nameVals <- sort(unique(unlist(v[2:3])))
-myMat <- matrix(0, length(nameVals), length(nameVals), dimnames = list(nameVals, nameVals))
-myMat[as.matrix(v[c("Treatment 1", "Treatment 2")])] <- v[["p_val"]]
-diag(myMat) <- 1
-
-myMat <- apply(myMat, 2, as.numeric)
-rownames(myMat) <- colnames(myMat)
-
-myMat <- as.matrix(Matrix::forceSymmetric(myMat, "U"))
-
-require(multcompView)
-
-if (!require(multcompView)){install.packages("multcompView")} 
-
-# Matrix creation
-nameVals <- sort(unique(unlist(v[2:3])))
-myMat <- matrix(0, length(nameVals), length(nameVals), dimnames = list(nameVals, nameVals))
-myMat[as.matrix(v[c("Treatment 1", "Treatment 2")])] <- v[["p_val"]]
-diag(myMat) <- 1
-
-myMat <- apply(myMat, 2, as.numeric)
-rownames(myMat) <- colnames(myMat)
-
-# Define the type of matrix
-myMat <- as.matrix(Matrix::forceSymmetric(myMat, "U"))
-
-# Set letters with 0.05 as p-value
-LET <- multcompLetters(myMat,
-                       compare="<",
-                       threshold=0.025,
-                       Letters=letters,
-                       reversed = FALSE)
-
-# Display small letters
-LET <- as.data.frame(LET[["Letters"]])
-
-LET$Treatment <- row.names(LET)
-
-LET$Treatment <- gsub("CO2", "+CO2", LET$Treatment)
-LET$Treatment <- stringr::str_replace_all(LET$Treatment, "Light", "-L")
-LET$Treatment <- gsub("Nitrogen", "-N", LET$Treatment)
-LET$Treatment <- gsub("Phosphate", "-P", LET$Treatment)
-LET$Treatment <- gsub("Control", "Cont", LET$Treatment)
-
-
-# Choose location of the letters on the graph
-require(ggbreak)
-coords_letter <- as.data.frame(cbind(values = (dat$div + dat$sd_div), Treatment = dat$Treatment)) #replace by rich, even or div
-
-
-coords_letter <- merge(LET, coords_letter, by = "Treatment")
-names(coords_letter)[2] <- "p_val"
-coords_letter$values <- as.numeric(coords_letter$values)
-
-
-## 3.6. Producing histograms of the different alpha diversity indices (factor for letter placement 2% for richness = 2. Keep the same for the rest)
-# Figures 4.A to 4.C
-img3 <- ggplot(dat, aes(x = Treatment, y = div)) + #replace by rich, even or div
-  geom_bar(stat="identity", position = position_dodge()) +
-  geom_errorbar(aes(ymin = div-sd_div, ymax = div+sd_div), width=.2, #replace by rich, even or div
-                position = position_dodge(.9)) +
-  annotate(geom = "text", x = 4, y = 1.2*max(dat$div), label = paste("H =", test_results$statistic,"; p-val <", test_results$p.value), size = 14/.pt) + #replace by rich, even or div
-  annotate(geom = "text", x = coords_letter$Treatment, y = coords_letter$values+0.3, label = coords_letter$p_val, parse = TRUE, size = 18/.pt) +
-  # ylim(0,60) + # Only for richness
-  # ylim(0,0.40) + # Only for Evenness
-  ylim(0,4.5)+ # Only for Dispersion
-  xlab("Treatment") +
-  ylab("Functional Dispersion") + #replace by rich, even or div
-  # ylim(c(0,100)) +
-  scale_x_discrete(limits=rev) +
-  theme_bw() +
-  theme(
-    axis.text = element_text(size = 12),
-    axis.title = element_text(size = 18)
+  # 1. Summary statistics by treatment
+  alpha_func <- data_summary(
+    data = Functional_rep_space_microcystis,
+    varname = met,
+    groupnames = "Treatment"
   )
 
-ggsave(file="Functional dispersion.svg", plot=img3, width=12, height=12, units = "cm") #replace by rich, even or div
+  # Clean treatment names
+  alpha_func$Treatment <- gsub("CO2", "+CO2", alpha_func$Treatment)
+  alpha_func$Treatment <- stringr::str_replace_all(alpha_func$Treatment, "Light", "-L")
+  alpha_func$Treatment <- gsub("Nitrogen", "-N", alpha_func$Treatment)
+  alpha_func$Treatment <- gsub("Phosphate", "-P", alpha_func$Treatment)
+  alpha_func$Treatment <- gsub("Control", "Cont", alpha_func$Treatment)
 
-## 3.7. Combine the 3 graphs into a single one (Figure 4.D)
-alpha_diversity <- ggpubr::ggarrange(img1, img2, img3, ncol = 3, nrow = 1)
-ggsave(file = "alpha_diversity.svg", plot = alpha_diversity, width = 26, height = 26, units = "cm")
+  dat <- alpha_func
 
+  # 2. Kruskal-Wallis test
+  test_results <- kruskal.test(as.formula(paste(met, "~ Treatment")), data = alpha_func)
+  test_results$statistic <- round(test_results$statistic, 2)
+  test_results$p.value <- round(test_results$p.value, 3)
+
+  # 3. Conover post-hoc
+  post_hoc <- conover.test(alpha_func[[met]], alpha_func$Treatment,
+                           kw = FALSE, alpha = 0.05, label = TRUE,
+                           list = FALSE, method="bh")
+
+  v <- as.data.frame(cbind(comparisons = post_hoc$comparisons,
+                           p_val = post_hoc$P.adjusted*2))
+  v[c('Treatment 1','Treatment 2')] <- str_split_fixed(v$comparisons, " - ", 2)
+  v <- v[,-1]
+
+  # 4. Build symmetric p-value matrix for multcompLetters
+  nameVals <- sort(unique(unlist(v[2:3])))
+  myMat <- matrix(0, length(nameVals), length(nameVals), dimnames = list(nameVals, nameVals))
+  myMat[as.matrix(v[c("Treatment 1", "Treatment 2")])] <- v[["p_val"]]
+  diag(myMat) <- 1
+  myMat <- apply(myMat, 2, as.numeric)
+  rownames(myMat) <- colnames(myMat)
+  myMat <- as.matrix(Matrix::forceSymmetric(myMat, "U"))
+
+  LET <- multcompLetters(myMat, compare = "<", threshold = 0.025, Letters = letters, reversed = FALSE)
+  LET <- as.data.frame(LET[["Letters"]])
+  LET$Treatment <- row.names(LET)
+
+  # Clean treatment names
+  LET$Treatment <- gsub("CO2", "+CO2", LET$Treatment)
+  LET$Treatment <- stringr::str_replace_all(LET$Treatment, "Light", "-L")
+  LET$Treatment <- gsub("Nitrogen", "-N", LET$Treatment)
+  LET$Treatment <- gsub("Phosphate", "-P", LET$Treatment)
+  LET$Treatment <- gsub("Control", "Cont", LET$Treatment)
+
+  # 5. Coordinates for letters on plot
+  coords_letter <- data.frame(values = (dat[[met]] + dat[[paste0("sd_", met)]]),
+                              Treatment = dat$Treatment)
+  coords_letter <- merge(LET, coords_letter, by = "Treatment")
+  names(coords_letter)[2] <- "p_val"
+  coords_letter$values <- as.numeric(coords_letter$values)
+
+  # 6. Plot
+  img <- ggplot(dat, aes_string(x = "Treatment", y = met)) +
+    geom_bar(stat = "identity", position = position_dodge()) +
+    geom_errorbar(aes_string(ymin = paste0(met,"-sd_",met),
+                             ymax = paste0(met,"+sd_",met)),
+                  width = 0.2, position = position_dodge(0.9)) +
+    annotate(geom = "text", x = 4,
+             y = 1.2 * max(dat[[met]]),
+             label = paste("H =", test_results$statistic,"; p-val <", test_results$p.value),
+             size = 14/.pt) +
+    annotate(geom = "text", x = coords_letter$Treatment,
+             y = coords_letter$values + 0.3,
+             label = coords_letter$p_val,
+             parse = TRUE, size = 18/.pt) +
+    xlab("Treatment") +
+    ylab(paste("Functional", met)) +
+    theme_bw() +
+    theme(axis.text = element_text(size = 12),
+          axis.title = element_text(size = 18))
+
+  # Save individual plots
+  ggsave(file = paste0("Functional_", met, ".svg"), plot = img,
+         width = 12, height = 12, units = "cm")
+
+  plot_list[[met]] <- img
+}
+
+# 7. Combine the three metrics into a single figure (Figure 4.D)
+alpha_diversity <- ggpubr::ggarrange(plot_list$rich,
+                                     plot_list$even,
+                                     plot_list$div,
+                                     ncol = 3, nrow = 1)
+
+ggsave(file = "alpha_diversity.svg", plot = alpha_diversity,
+       width = 26, height = 26, units = "cm")
 
 ## 4. Dissimilarity across functional space
 require(hypervolume)
@@ -368,3 +383,72 @@ img <-
                                title.hjust = 0.5, title.vjust = 5))
 img
 ggsave(file="Jaccard similarity multitraits.svg", plot=img, width=15, height=14, units = "cm")
+
+## 5. Functional dissimilarity (Jaccard similarity)
+# 5.1 Compute hypervolumes for each treatment
+hv_list <- list()
+for(tr in unique(reduced_dim$Label)){
+  temp <- reduced_dim %>% filter(Label == tr)
+  hv_list[[tr]] <- hypervolume_gaussian(temp[, c(12:13)],
+                                       kde.bandwidth = bw_estimate,
+                                       quantile.requested = 0.95,
+                                       quantile.requested.type = "probability")
+}
+
+# 5.2 Pairwise Jaccard similarity
+n <- length(hv_list)
+jaccard_mat <- matrix(NA, n, n, dimnames = list(names(hv_list), names(hv_list)))
+for(i in 1:n){
+  for(j in i:n){
+    if(i==j) { jaccard_mat[i,j] <- 1 } 
+    else {
+      hv_set <- hypervolume_set(hv1=hv_list[[i]], hv2=hv_list[[j]], verbose=FALSE, check.memory=FALSE)
+      stats <- hypervolume_overlap_statistics(hv_set)
+      jaccard_mat[i,j] <- stats$`Jaccard index`
+      jaccard_mat[j,i] <- jaccard_mat[i,j]
+    }
+  }
+}
+
+# 5.3 Clean names for plotting
+plot_mat <- jaccard_mat
+rownames(plot_mat) <- gsub("CO2", "+CO2", rownames(plot_mat))
+rownames(plot_mat) <- stringr::str_replace_all(rownames(plot_mat), "Light", "-Light")
+rownames(plot_mat) <- gsub("Nitrogen", "-N", rownames(plot_mat))
+rownames(plot_mat) <- gsub("Phosphorus", "-P", rownames(plot_mat))
+colnames(plot_mat) <- rownames(plot_mat)
+
+melt_mat <- reshape2::melt(plot_mat, na.rm = TRUE)
+melt_mat$value <- round(melt_mat$value, 2)
+
+# 5.4 Jaccard heatmap
+jaccard_plot <- ggplot(melt_mat, aes(x=Var2, y=Var1, fill=value)) +
+  geom_tile() +
+  geom_text(aes(Var2, Var1, label=value), color="black", size=6) +
+  scale_fill_gradient2(low="snow2", mid="paleturquoise2", high="paleturquoise3",
+                       midpoint=0.5, limit=c(0,1), space="Lab", name="Jaccard \nSimilarity") +
+  theme_bw() +
+  coord_fixed() +
+  theme(axis.text.x=element_text(size=12, family="Arial", hjust=1, angle=35),
+        axis.text.y=element_text(size=12, family="Arial")) +
+  guides(fill=guide_colorbar(barwidth=2, barheight=10, title.hjust=0.5, title.vjust=5))
+
+
+## 6. Combine alpha diversity and Jaccard similarity
+
+layout_mat <- rbind(c(1,2),
+                    c(3,4))
+
+final_figure <- ggpubr::ggarrange(plot_list$rich,
+                                  plot_list$even,
+                                  plot_list$div,
+                                  jaccard_plot,
+                                  ncol=2, nrow=2,
+                                  layout_matrix = layout_mat,
+                                  widths = c(1,1),
+                                  heights = c(1,1))
+
+# Save final figure
+ggsave("Functional_diversity_4panel.svg",
+       plot = final_figure,
+       width = 26, height = 26, units = "cm")
