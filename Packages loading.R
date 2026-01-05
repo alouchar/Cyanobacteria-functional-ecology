@@ -13,7 +13,7 @@
 install.packages("remotes")
 remotes::install_github("cmartin/ggConvexHull")
 
-packages = c("ggConvexHull","svMisc","dplyr","ggplot2","RColorBrewer","ggrepel","devtools","PCAtest",
+packages = c("ggConvexHull","svMisc","dplyr","dataverse","ggplot2","RColorBrewer","ggrepel","devtools","PCAtest",
              "tidyr","ggsci","tictoc","BAT","reshape2","ggpubr","pheatmap","hypervolume","alphahull",
              "ade4","ggExtra","corrplot","tidyverse","ggnewscale","ggpmisc","scales","cowplot")
 
@@ -28,3 +28,4 @@ rm(p,packages)
 
 options(scipen = 999)
 Sys.setlocale("LC_ALL", "English")
+
