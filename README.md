@@ -58,6 +58,7 @@ Datasets: IndTraits, CommTraits
 # RColorBrewer      1.1-3
 # ggrepel           0.9.4
 # devtools          2.4.5
+# dataverse         0.3.16
 # PCAtest           0.0.1
 # tidyr             1.3.0
 # ggsci             3.0.0
