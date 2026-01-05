@@ -314,7 +314,15 @@ rm(list=setdiff(ls(), c("dat","edge_data", "DATA")))
 # IndTraits contains flow cytometry informations at the individual level for each treatment obtained through the PhytoCytoTraits GUI.
 # Treatment contains informations on the different environmental conditions
 
-dat <- readxl::read_excel("D:/IndCyano_Louchart_Limitation_experiment_June2025.xlsx", sheet = "IndTraits")
+Sys.setenv("DATAVERSE_SERVER" = "dataverse.nl")
+
+dat <- get_dataframe_by_name(
+  dataset  = "10.34894/9X9YMO",
+  filename = "IndCyano_Louchart_Limitation_experiment_June2025.xlsx",
+  original = TRUE,
+  .f       = readxl::read_excel,
+  sheet    = "IndTraits"
+)
 
 #### 3. DATA MANIPULATION
 ## 3.1. Log10 transformation
@@ -322,3 +330,4 @@ dat[,c(3:10)] <- log10(dat[,c(3:10)])
 
 ## 3.2. Z-score normalisation
 dat[,c(3:10)] <- scale(dat[,c(3:10)], center = TRUE, scale = TRUE)
+
