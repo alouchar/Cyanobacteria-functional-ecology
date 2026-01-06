@@ -15,7 +15,8 @@ remotes::install_github("cmartin/ggConvexHull")
 
 packages = c("ggConvexHull","svMisc","dplyr","dataverse","ggplot2","RColorBrewer","ggrepel","devtools","PCAtest",
              "tidyr","ggsci","tictoc","BAT","reshape2","ggpubr","pheatmap","hypervolume","alphahull",
-             "ade4","ggExtra","corrplot","tidyverse","ggnewscale","ggpmisc","scales","cowplot")
+             "ade4","ggExtra","corrplot","tidyverse","ggnewscale","ggpmisc","scales","cowplot","foreach","doSNOW",
+            "progress","plyr","conover.test","stringr","multcompView","Matrix","ggbreak", "readxl")
 
 for(p in packages){
   if(!require(p, character.only = T)){
@@ -28,4 +29,5 @@ rm(p,packages)
 
 options(scipen = 999)
 Sys.setlocale("LC_ALL", "English")
+
 
