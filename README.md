@@ -1,5 +1,5 @@
 # Cyanobacteria-functional-ecology
-The code aims at reproducing the analyses and figures presented in the paper titled Functional response of cyanobacteria to environmental changes. These code directly opens the dataset located at: doi.org/10.34894/9X9YMO.
+The code aims at reproducing the analyses and figures presented in the paper titled "Individual-level trait responses in cyanobacterial populations and communities". These code directly opens the dataset located at: doi.org/10.34894/9X9YMO.
 The code uses R version 4.3.1.
 
 ## Content
@@ -36,15 +36,15 @@ Dataset: IndTraits
 
 `Results_Functional analyses from individual level.R`
 
-The script produces the figures 3 and 4. From Line 175 the code runs only for one treatment. 
+The script produces the figures 3 and 4. Initially, the code code ran only for one treatment starting from Line 175. An update has generalised the code for all treatments. 
 
 Dataset: IndTraits
 
 `Results_Functional assessment of natural communities.R`
 
-The script produces the figure 5. Ensure that you read the data set "DATA" to produce the functional fingerprints.
+The script produces the figure 5 and fig. S7, S8 and S9.
 
-Datasets: IndTraits, CommTraits
+Datasets: IndTraits, CommTraits, envData
 
 ## List of packages and versions
 
