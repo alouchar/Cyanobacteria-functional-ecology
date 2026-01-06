@@ -223,6 +223,90 @@ p
 ggsave(file="figure 5.svg", plot=p, width=20, height=14, units = "cm")
 
 
+## Supp. Material S7
+require(tidyr)
+
+common_theme <- theme(
+  axis.text  = element_text(size = 10),
+  axis.title = element_text(size = 10)
+) +
+  theme_bw()
+
+p1 <- 
+  centroids %>%
+  drop_na(`TN (mmol/L)`) %>%
+  ggplot(mapping = aes(x = Date, y = `TN (mmol/L)`)) +
+  geom_point() +
+  geom_point(data = N_lim, mapping = aes(x = Date, `TN (mmol/L)`), col = "orange", size = 3, shape = 21,  stroke = 1.2) +
+  geom_line() +
+  xlab("Date") +
+  ylab(expression("Total Nitrogen (mmol L"^{-1}*")" )) +
+  common_theme
+
+p2 <- 
+  centroids %>%
+  drop_na(`DIN (mmol/L)`) %>%
+  ggplot(mapping = aes(x = Date, y = `DIN (mmol/L)`)) +
+  geom_point() +
+  geom_point(data = N_lim, mapping = aes(x = Date, y = `DIN (mmol/L)`), col = "orange", size = 3, shape = 21,  stroke = 1.2) +
+  geom_line() +
+  xlab("Date") +
+  ylab(expression("Dissolved Inorganic Nitrogen (mmol L"^{-1}*")" )) +
+  common_theme
+
+p3 <- 
+  centroids %>%
+  drop_na(`TP (mmol/L)`) %>%
+  ggplot(mapping = aes(x = Date, y = `TP (mmol/L)`)) +
+  geom_point() +
+  geom_point(data = N_lim, mapping = aes(x = Date, `TP (mmol/L)`), col = "orange", size = 3, shape = 21,  stroke = 1.2) +
+  geom_line() +
+  xlab("Date") +
+  ylab(expression("Total Phosphorus (mmol L"^{-1}*")" )) +
+  common_theme
+
+p4 <- 
+  centroids %>%
+  drop_na(I_m) %>%
+  ggplot(mapping = aes(x = Date, y = I_m)) +
+  geom_point() +
+  geom_point(data = N_lim, mapping = aes(x = Date, y = I_m), col = "orange", size = 3, shape = 21,  stroke = 1.2) +
+  geom_line() +
+  xlab("Date") +
+  ylab(expression("Irradiance of the mixed layer (" ~ mu * "mol photons" ~ m^2 ~ s^-1*")")) +
+  common_theme
+
+p5 <- 
+  centroids %>%
+  ggplot(mapping = aes(y = `TN (mmol/L)`/`TP (mmol/L)`, x = Date))+
+  geom_point(data = N_lim, aes(y = `TN (mmol/L)`/`TP (mmol/L)`, x = Date) , col = "orange", size = 3, shape = 21,  stroke = 1.2) +
+  geom_point() +
+  ylab("TN:TP") +
+  xlab("Date") +
+  stat_smooth(se = TRUE, method = "lm", col = "grey20", linetype = "dashed") +
+  stat_poly_eq(mapping = use_label(c("adj.R2", "P")), size = 4, label.x = 0.95) +
+  common_theme
+
+p6 <- 
+  centroids %>%
+  ggplot(mapping = aes(y = `Global irradiance`, x = Date))+
+  geom_point(data = N_lim, aes(y = `Global irradiance`, x = Date) , col = "orange", size = 3, shape = 21,  stroke = 1.2) +
+  geom_point() +
+  ylab(expression("Global irradiance (" ~ mu * "mol photons" ~ m^2 ~ s^-1*")")) + 
+  xlab("Date") +
+  stat_smooth(se = FALSE, method = "gam", col = "grey20", linetype = "dashed") +
+  common_theme
+
+# 7.9) Produce the Time series plot
+top <- plot_grid(p1, p2, labels = c('A','B'))
+mid <- plot_grid(p3, p4, labels = c('C','D'))
+bot <- plot_grid(p5, p6, labels = c('E','F'))
+
+p <- plot_grid(top, mid, bot, ncol =1)
+
+ggsave(file="Supplementary mat TS env param.svg", plot=p, width=18, height=24, units = "cm")
+
+
 ## Supp. Material S8
 traits_table <- reshape2::melt(
   dat[,c(1,3:10)],
@@ -247,4 +331,3 @@ p <- traits_table %>%
         axis.title=element_text(size=10))
 
 ggsave(file="Supplementary mat density distribution.svg", plot=p, width=16, height=10, units = "cm")
-
