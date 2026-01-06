@@ -63,7 +63,7 @@ ggsave(file="PCA_density.svg", plot=pca_marg, width=16, height=16, units = "cm",
 
 rm(heatmap, NOM, num_mat)
 
-# 2.8. PCA eigenvalues dataframe binded with environmental conditions and replicate
+## 2.8. PCA eigenvalues dataframe binded with environmental conditions and replicate
 reduced_dim <- as.data.frame(cbind(dat, PCA$li$Axis1, PCA$li$Axis2, PCA$li$Axis3, PCA$li$Axis4))
 
 names(reduced_dim)[11] <- "PCA1"
@@ -71,30 +71,19 @@ names(reduced_dim)[12] <- "PCA2"
 names(reduced_dim)[13] <- "PCA3"
 names(reduced_dim)[14] <- "PCA4"
 
-my_theme <- theme(axis.text=element_text(size=10),
-                  panel.grid.major = element_blank(),
-                  panel.grid.minor = element_blank(),
-                  legend.position.inside = c(0.90,0.30),
-                  legend.direction = "vertical",
-                  legend.key = element_rect(fill = "transparent"),
-                  legend.key.size = unit(.7,"line"))
-
 rm(list = setdiff(ls(),"reduced_dim"))
+
+
+## 2.9. Delineation of multidimensional functional space
+
+# The methodology relies on the probabilistic hypervolume since it considers abundance thus being less sensitive to outliers
+bw_estimate <- hypervolume::estimate_bandwidth(reduced_dim[, c("PCA1","PCA2")], method = "cross-validation")
 
 
 ## 3. Computation of functional diversity indices based on functional hypervolumes
 ## Steps 3.1 and 3.2 are computationally intensive and may require several days per treatment depending on data size.
-# The methodology relies on the probabilistic hypervolume since it considers abundance thus being less sensitive to outliers
 
 ## 3.1. Hypervolume computation parallelized using foreach on multiple CPU cores
-library(dplyr)
-library(foreach)
-library(doSNOW)
-library(progress)
-library(hypervolume)
-
-# Delineation of multidimensional functional space
-bw_estimate <- hypervolume::estimate_bandwidth(reduced_dim[, c("PCA1","PCA2")], method = "cross-validation")
 
 # List of environmental treatments to be analysed
 treatments <- unique(reduced_dim$Treatment)
@@ -106,7 +95,6 @@ num_cores <- 2
 cl <- makeCluster(num_cores)
 registerDoSNOW(cl)
 
-# Function computing the hypervolume and diversity indices for a single treatment
 compute_hypervolume_treatment <- function(tr, data, bw) {
   
   message("Processing treatment: ", tr)
@@ -169,6 +157,7 @@ compute_hypervolume_treatment <- function(tr, data, bw) {
     div  = kernel.dispersion(hv)    # Functional dispersion
   )
 }
+
 
 ## 3.3. Run the analysis for all environmental treatments
 Functional_rep_space_microcystis <- do.call(
@@ -238,7 +227,6 @@ conover_results <- lapply(metrics, function(met){
 
 names(conover_results) <- metrics
 
-
 ## 3.6. Pairwise significance letters
 get_letters <- function(conover_obj){
   
@@ -295,7 +283,6 @@ data_summary <- function(data, varnames, groupnames){
   
   return(summary_all)
 }
-
 
 # Produce the table
 alpha_func <- data_summary(
@@ -372,10 +359,20 @@ img_div  <- plot_alpha("div",  "Functional divergence", letters_df = letters_lis
 
 
 ## 3.9. Dissimilarities between treatments
-hv_list <- list()
-treatments <- names(hv_list)
+treatments <- unique(reduced_dim$Treatment)
 
-pair_combinations <- combn(treatments, 2, simplify = FALSE)
+hv_list <- setNames(
+  lapply(treatments, function(tr) {
+    temp <- reduced_dim %>% filter(Treatment == tr)
+    hypervolume::hypervolume_gaussian(temp[, c("PCA1", "PCA2")],
+                                      kde.bandwidth = bw_estimate,
+                                      quantile.requested = 0.95,
+                                      quantile.requested.type = "probability")
+  }),
+  treatments
+)
+
+pair_combinations <- combn(names(hv_list), 2, simplify=FALSE)
 
 # compute pairwise overlap
 overlap_results <- lapply(pair_combinations, function(pair) {
@@ -400,18 +397,21 @@ overlap_results <- lapply(pair_combinations, function(pair) {
 # Combine all results
 overlap_table <- bind_rows(overlap_results)
 
+
 # Define treatments and order
 treatments <- c("-Light", "-Nitrogen", "-Phosphorus", "+CO2", "Control")
 
 # Convert overlap_table to square matrix
 mat <- matrix(NA, nrow = length(treatments), ncol = length(treatments),
               dimnames = list(treatments, treatments))
+
 for(i in 1:nrow(overlap_table)){
   t1 <- overlap_table$Treatment1[i]
   t2 <- overlap_table$Treatment2[i]
   mat[t1, t2] <- overlap_table$Jaccard_similarity[i]
   mat[t2, t1] <- overlap_table$Jaccard_similarity[i]
 }
+
 diag(mat) <- 1
 
 # Keep upper triangle
@@ -419,6 +419,7 @@ get_upper_tri <- function(cormat){
   cormat[upper.tri(cormat)] <- NA
   return(cormat)
 }
+
 upper_tri <- get_upper_tri(mat)
 
 # Melt for ggplot
@@ -461,5 +462,3 @@ p <- plot_grid(top, bot, ncol =1)
 p
 
 ggsave(file="Functional diversity.svg", plot=p, width=20, height=20, units = "cm")
-
-
