@@ -20,6 +20,8 @@ dat <-
     server = "dataverse.nl",
     .f = function(file) read_excel(file, sheet = "CommTraits"),
   )
+dat$Treatment <- NA
+dat$Label <- NA
 
 df <-
   get_dataframe_by_name(
@@ -219,3 +221,4 @@ p <- ggplot() +
         panel.grid.minor = element_blank())
 p
 ggsave(file="figure 5.svg", plot=p, width=20, height=14, units = "cm")
+
