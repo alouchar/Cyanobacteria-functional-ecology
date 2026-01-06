@@ -1,5 +1,5 @@
 # Cyanobacteria-functional-ecology
-The code aims at reproducing the analyses and figures presented in the paper titled "Individual-level trait responses in cyanobacterial populations and communities". These code directly opens the dataset located at: doi.org/10.34894/9X9YMO.
+The code aims at reproducing the analyses and figures presented in the paper titled "Individual-level trait responses in cyanobacterial populations and communities". This code directly opens the dataset located at: doi.org/10.34894/9X9YMO.
 The code uses R version 4.3.1.
 
 ## Content
