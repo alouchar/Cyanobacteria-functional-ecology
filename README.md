@@ -77,4 +77,13 @@ Datasets: IndTraits, CommTraits
 # ggpmisc           0.5.4-1
 # scales            1.3.0
 # cowplot           1.1.3
+# foreach           1.5.2
+# doSNOW            1.0.20
+# progress          1.2.2 
+# plyr              1.8.9
+# conover.test      1.1.5
+# multcompView      0.1-9
+# Matrix            1.6-1.1
+# ggbreak           0.1.2
+# readxl            1.4.3
 ```
