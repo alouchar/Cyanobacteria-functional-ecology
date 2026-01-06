@@ -222,3 +222,29 @@ p <- ggplot() +
 p
 ggsave(file="figure 5.svg", plot=p, width=20, height=14, units = "cm")
 
+
+## Supp. Material S8
+traits_table <- reshape2::melt(
+  dat[,c(1,3:10)],
+  id.vars = "Treatment",
+  variable.name = "Trait",
+  value.name = "value"
+)
+
+traits_table <- na.omit(traits_table)
+
+p <- traits_table %>%
+  ggplot() +
+  geom_density(aes(x = value, color = Treatment)) +
+  facet_wrap(.~Trait, nrow = 2, scales = "free") +
+  scale_color_d3(name = traits_table$Treatment) +
+  xlab("Trait value") +
+  ylab("Density distribution") +
+  theme_bw() +
+  theme(legend.position = "bottom",
+        legend.title=element_blank(),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=10))
+
+ggsave(file="Supplementary mat density distribution.svg", plot=p, width=16, height=10, units = "cm")
+
