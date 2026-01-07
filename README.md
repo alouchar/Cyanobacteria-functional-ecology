@@ -11,6 +11,7 @@ The code uses R version 4.3.1.
   - Results_Flow cytometry traits.R
   - Results_Functional analyses from individual level.R
   - Results_Functional assessment of natural communities.R
+  - Supplementary material.R
 
 ## Reproduction of analyses and figures 
 
@@ -24,7 +25,7 @@ The code uses R version 4.3.1.
 
 The script details methodological steps necessar to prepare the data. The script produce figure 1 panels B to F.
 
-Dataset: IndTraits
+Tab: IndTraits
 
 #### Results
 
@@ -32,19 +33,26 @@ Dataset: IndTraits
 
 The script produces the figure 2.
 
-Dataset: IndTraits
+Tab: IndTraits
 
 `Results_Functional analyses from individual level.R`
 
 The script produces the figures 3 and 4. Initially, the code code ran only for one treatment starting from Line 175. An update has generalised the code for all treatments. 
 
-Dataset: IndTraits
+Tab: IndTraits
 
 `Results_Functional assessment of natural communities.R`
 
-The script produces the figure 5 and fig. S7, S8 and S9.
+The script produces the figure 5.
 
-Datasets: IndTraits, CommTraits, envData
+Tabs: IndTraits, CommTraits, envData
+
+`Supplementary material.R"
+
+The script produces the figures S1 to S9.
+
+Tabs: IndTraits, CommTraits, envData, Supp. S1, Supp. S6
+
 
 ## List of packages and versions
 
