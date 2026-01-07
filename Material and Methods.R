@@ -325,9 +325,12 @@ dat <- get_dataframe_by_name(
 )
 
 #### 3. DATA MANIPULATION
+dat <- dat[,c(1:10)]
+
 ## 3.1. Log10 transformation
 dat[,c(3:10)] <- log10(dat[,c(3:10)])
 
 ## 3.2. Z-score normalisation
 dat[,c(3:10)] <- scale(dat[,c(3:10)], center = TRUE, scale = TRUE)
+
 
