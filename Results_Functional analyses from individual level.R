@@ -37,11 +37,11 @@ rowSums(100*(factoextra::get_pca_var(PCA)$cos2)[,c(1,2)])
 ## 2.7. Plot PCA Biplot with density curve per environmental conditions (superimposition check between environmental conditions)
 # Figure 3
 p <- ggplot() +
-  geom_point(PCA$li, mapping = aes(x = PCA$li$Axis1, y = PCA$li$Axis2, color = as.factor(dat$Treatment)), alpha = 0.3, size = 0.7) +
+  geom_point(PCA$li, mapping = aes(x = PCA$li$Axis1, y = -PCA$li$Axis2, color = as.factor(dat$Treatment)), alpha = 0.3, size = 0.7) +
   geom_vline(xintercept = 0, linetype = "dashed", linewidth = 0.5) +
   geom_hline(yintercept = 0, linetype = "dashed", linewidth = 0.5) +
-  geom_segment(PCA$co, mapping = aes(x = 0, y = 0, xend = PCA$co$Comp1*3, yend = PCA$co$Comp2*3), col = "grey20",arrow = arrow(length = unit(0.02, "npc"))) +
-  geom_label_repel(size = 4, PCA$co, mapping = aes(x = PCA$co$Comp1*4, y = PCA$co$Comp2*4, label = rownames(PCA$co)), col = "grey20") +
+  geom_segment(PCA$co, mapping = aes(x = 0, y = 0, xend = PCA$co$Comp1*3, yend = -PCA$co$Comp2*3), col = "grey20",arrow = arrow(length = unit(0.02, "npc"))) +
+  geom_label_repel(size = 4, PCA$co, mapping = aes(x = PCA$co$Comp1*4, y = -PCA$co$Comp2*4, label = rownames(PCA$co)), col = "grey20") +
   xlab("PC1 (51.8%)") +
   ylab("PC2 (27.4%)") +
   xlim(c(-9,9)) +
@@ -58,13 +58,13 @@ p <- ggplot() +
 p <- p + guides(colour = guide_legend(override.aes = list(size=14)))
 pca_marg <- ggMarginal(p, groupColour = TRUE, groupFill = TRUE)
 pca_marg
-
+p
 ggsave(file="PCA_density.svg", plot=pca_marg, width=16, height=16, units = "cm", dpi = 400)
 
 rm(heatmap, NOM, num_mat)
 
 ## 2.8. PCA eigenvalues dataframe binded with environmental conditions and replicate
-reduced_dim <- as.data.frame(cbind(dat, PCA$li$Axis1, PCA$li$Axis2, PCA$li$Axis3, PCA$li$Axis4))
+reduced_dim <- as.data.frame(cbind(dat, PCA$li$Axis1, -PCA$li$Axis2, PCA$li$Axis3, PCA$li$Axis4))
 
 names(reduced_dim)[11] <- "PCA1"
 names(reduced_dim)[12] <- "PCA2"
@@ -157,6 +157,8 @@ compute_hypervolume_treatment <- function(tr, data, bw) {
     div  = kernel.dispersion(hv)    # Functional dispersion
   )
 }
+
+reduced_sample <- reduced_dim
 
 
 ## 3.3. Run the analysis for all environmental treatments
@@ -299,7 +301,7 @@ plot_alpha <- function(metric_name, y_label, letters_df) {
   dat <- alpha_func[alpha_func$metric == metric_name, ]
   dat$Treatment <- as.character(dat$Treatment)
   
-  Treatment <- c("-Light", "-Nitrogen", "-Phosphorus", "+CO2", "Control")
+  Treatment <- c("Control", "+CO2", "-Phosphorus", "-Nitrogen", "-Light")
   
   # Merge letters
   coords <- merge(dat, letters_df, by = "Treatment", all.x = TRUE)
@@ -315,10 +317,10 @@ plot_alpha <- function(metric_name, y_label, letters_df) {
   
   # Base bar plot
   p <- ggplot(dat, aes(x = Treatment, y = mean, fill = Treatment)) +
-    geom_bar(stat = "identity") +
+    geom_bar(stat = "identity", position = position_dodge()) +
     geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd), width = 0.2) +
     scale_fill_manual(values = treatment_colors) +
-    scale_x_discrete(labels = axis_labels) +
+    scale_x_discrete(labels = axis_labels, limits=rev) +
     ylab(y_label) +
     xlab("") +
     theme_bw() +
@@ -357,6 +359,7 @@ img_rich <- plot_alpha("rich", "Functional richness", letters_df = letters_list[
 img_even <- plot_alpha("even", "Functional evenness", letters_df = letters_list[["even"]])
 img_div  <- plot_alpha("div",  "Functional divergence", letters_df = letters_list[["div"]])
 
+img_rich
 
 ## 3.9. Dissimilarities between treatments
 treatments <- unique(reduced_dim$Treatment)
@@ -462,3 +465,4 @@ p <- plot_grid(top, bot, ncol =1)
 p
 
 ggsave(file="Functional diversity.svg", plot=p, width=20, height=20, units = "cm")
+
