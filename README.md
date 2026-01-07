@@ -47,7 +47,7 @@ The script produces the figure 5.
 
 Tabs: IndTraits, CommTraits, envData
 
-`Supplementary material.R"
+`Supplementary material.R`
 
 The script produces the figures S1 to S9.
 
