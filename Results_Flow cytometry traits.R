@@ -16,6 +16,7 @@ DAT <- dat %>%
   group_by(Treatment, Replicate) %>%
   summarise_all(mean)
 
+## Run 
 # Convert the data as a matrix
 num_mat <- as.matrix(sapply(DAT[,c(3:10)], as.numeric))
 
@@ -36,3 +37,4 @@ heatmap <- pheatmap(num_mat, cutree_rows = 5, cutree_cols = 4, fontsize = 16, an
 svg(filename = "Heatmap_filters_treatments.svg",width=7, height=7, family = "sans", pointsize = 12)
 heatmap
 dev.off()
+
