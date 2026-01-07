@@ -11,22 +11,6 @@
 #############################################################################
 
 #### PRODUCTION OF GRAPHICAL AND NUMERICAL OUTPUTS AS WELL AS INTERMEDIATE DATASETS
-## 1. Flow cytometry traits
-## 1.1. Correlation matrix between traits to identify collinearity (supplementary material figure 2)
-res <- cor(dat[,c(3:10)])
-p.mat <- cor.mtest(dat[,c(3:10)])
-
-svg(filename = "Trait correlation matrix.svg", width=6, height=6, pointsize = 12, family = "sans")
-corrplot(res, method = "shade", shade.col = NA,
-         addCoef.col = "grey50", type = "upper",
-         cl.pos = "n", order = "hclust", 
-         p.mat = p.mat, sig.level = 0.001,
-         tl.col = "black", tl.srt = 45)
-dev.off()
-
-rm(res, p.mat)
-
-## 1.2. Heatmap of cyanobacterial traits across environmental conditions (Figure 2)
 # Compute average values by environmental condition and replicate
 DAT <- dat %>%
   group_by(Treatment, Replicate) %>%
@@ -52,4 +36,3 @@ heatmap <- pheatmap(num_mat, cutree_rows = 5, cutree_cols = 4, fontsize = 16, an
 svg(filename = "Heatmap_filters_treatments.svg",width=7, height=7, family = "sans", pointsize = 12)
 heatmap
 dev.off()
-
