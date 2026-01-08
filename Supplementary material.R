@@ -18,7 +18,10 @@ require(cowplot)
 require(patchwork)
 require(rstatix)
 require(ggpattern)
-require(tidyr)
+library(tidyr)
+library(multcompView)
+library(ggrepel)
+
 
 ## Supp. Material fig. S1
 dat <-
@@ -323,7 +326,149 @@ ggsave(file="PCA_axes.png", plot=p, width= 17.3, height=12, units = "cm")
 
 
 ## Supp. Material fig. S6
+df <-
+  get_dataframe_by_name(
+    filename  = "IndCyano_Louchart_Limitation_experiment_June2025.xlsx",
+    dataset   = "10.34894/9X9YMO",
+    server = "dataverse.nl",
+    .f = function(file) read_excel(file, sheet = "Supp. S6"),
+  )
 
+df_long <- df %>%
+  pivot_longer(
+    cols = c(Chla_start, Chla_end),
+    names_to = "Phase",
+    values_to = "Chla"
+  ) %>%
+  mutate(
+    Phase = recode(Phase,
+               Chla_start = "Start",
+               Chla_end   = "End"),
+    Phase = factor(Phase, levels = c("Start", "End"))
+  )
+
+df_sum <- df_long %>%
+  group_by(`Start date`, Treatment, Phase) %>%
+  summarise(
+    mean = mean(Chla, na.rm = TRUE),
+    SD   = sd(Chla, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+
+df_end <- df %>%
+  select(`Start date`, Treatment, Chla_end) %>%
+  filter(!is.na(Chla_end))
+
+start_dates <- sort(unique(df_end$`Start date`))
+
+
+letters_list <- list()
+
+for (i in seq_along(start_dates)) {
+  
+  this_date <- start_dates[i]
+  df_sub <- df_end %>% 
+    filter(`Start date` == this_date)
+  
+  # Sécurité : au moins 2 traitements
+  if (n_distinct(df_sub$Treatment) < 2) next
+  
+  fit <- aov(Chla_end ~ Treatment, data = df_sub)
+  tuk <- TukeyHSD(fit)
+  
+  # Extraction des lettres
+  letters <- multcompLetters4(fit, tuk)$Treatment
+  
+  letters_df <- data.frame(
+    Treatment  = names(letters$Letters),
+    Letters    = letters$Letters,
+    `Start date` = this_date,
+    stringsAsFactors = FALSE
+  )
+  
+  letters_list[[i]] <- letters_df
+}
+
+letters_df <- bind_rows(letters_list)
+
+letters_df <- letters_df %>%
+  rename(`Start date` = Start.date)
+
+
+df_sum <- df_sum %>%
+  mutate(`Start date` = as.character(`Start date`)) %>%
+  left_join(
+    letters_df %>%
+      mutate(`Start date` = as.character(`Start date`)),
+    by = c("Start date", "Treatment")
+  ) %>%
+  mutate(
+    Letters = ifelse(Phase == "End", Letters, NA_character_)
+  )
+
+
+p <- ggplot(df_sum,
+       aes(x = Phase, y = mean,
+           color = Treatment,
+           group = Treatment)) +
+  
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  
+  geom_errorbar(
+    aes(ymin = mean - SD, ymax = mean + SD),
+    width = 0.05,
+    size = 0.5
+  ) +
+  
+  geom_text_repel(
+    data = df_sum %>% filter(Phase == "End"),
+    aes(
+      label = Letters,
+      color = Treatment,
+    ),
+    size = 5,
+    direction = "both",
+    force = 2,
+    force_pull = 0.5,
+    box.padding = 0.6,
+    point.padding = 0.4,
+    min.segment.length = 0,
+    show.legend = FALSE
+  ) +
+  
+  facet_wrap(~ `Start date`, ncol = 3, scales = "free") +
+  
+  scale_color_manual(
+    values = c(
+      "Control" = "#8E6BBE",
+      "N"       = "#FF7F0E",
+      "NP"      = "#8C564B",
+      "P"       = "#2CA02C"
+    )
+  ) +
+  
+  labs(
+    x = NULL,
+    y = "Eq. chlorophyll-a concentration",
+    color = "Treatment"
+  ) +
+  theme_bw() +
+  theme(
+    strip.background = element_rect(fill = "grey85", color = "black"),
+    strip.text = element_text(size = 10),
+    axis.text = element_text(size = 11),
+    axis.title.y = element_text(size = 14),
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    panel.grid.minor = element_blank()
+  )
+
+ggsave(filename = "figure_chla.svg", plot = p, width = 24, height = 18, units = "cm", dpi = 400)
+
+
+## Supp. Material fig. S7
 common_theme <- theme(
   axis.text  = element_text(size = 10),
   axis.title = element_text(size = 10)
@@ -463,4 +608,5 @@ p <- ggplot() +
         panel.grid.minor = element_blank()) +
   facet_wrap(~Source)
 p
+
 ggsave(file="supp figure 5.svg", plot=p, width=26, height=18, units = "cm")
