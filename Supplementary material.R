@@ -68,7 +68,7 @@ dat <-
     filename  = "IndCyano_Louchart_Limitation_experiment_June2025.xlsx",
     dataset   = "10.34894/9X9YMO",
     server = "dataverse.nl",
-    .f = function(file) read_excel(file, sheet = "Intraits"),
+    .f = function(file) read_excel(file, sheet = "IndTraits"),
   )
 
 p1 <- dat %>%
@@ -610,3 +610,4 @@ p <- ggplot() +
 p
 
 ggsave(file="supp figure 5.svg", plot=p, width=26, height=18, units = "cm")
+
