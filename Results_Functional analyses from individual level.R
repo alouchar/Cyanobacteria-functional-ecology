@@ -13,7 +13,6 @@
 #### FUNCTIONAL ANALYSES FROM INDIVIDUAL LEVEL
 
 ## 2. Computation of functional space 
-# install_github("arleyc/PCAtest")
 
 ## 2.1. Dimension reduction through a Principal Component Analysis
 PCA <- dudi.pca(dat[,c(3:10)], scannf = FALSE, nf = 7)
@@ -465,4 +464,5 @@ p <- plot_grid(top, bot, ncol =1)
 p
 
 ggsave(file="Functional diversity.svg", plot=p, width=20, height=20, units = "cm")
+
 
