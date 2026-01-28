@@ -10,24 +10,26 @@
 ############################## PACKAGES LOADING ##############################
 ##############################################################################
 
-install.packages("remotes")
-remotes::install_github("cmartin/ggConvexHull")
+# Note: ggConvexHull must be installed from GitHub manually:
+# remotes::install_github("cmartin/ggConvexHull")
 
 packages = c("ggConvexHull","svMisc","dplyr","dataverse","ggplot2","RColorBrewer","ggrepel","devtools","PCAtest",
              "tidyr","ggsci","tictoc","BAT","reshape2","ggpubr","pheatmap","hypervolume","alphahull",
              "ade4","ggExtra","corrplot","tidyverse","ggnewscale","ggpmisc","scales","cowplot","foreach","doSNOW",
             "progress","plyr","conover.test","stringr","multcompView","Matrix","ggbreak", "readxl")
 
-for(p in packages){
-  if(!require(p, character.only = T)){
-    install.packages(p)
-  }
-  require(p, character.only = T)
+missing_pkgs <- packages[!sapply(packages, requireNamespace, quietly = TRUE)]
+
+if (length(missing_pkgs) > 0) {
+  stop(
+    "The following packages are required but not installed:\n",
+    paste(missing_pkgs, collapse = ", ")
+  )
 }
 
-rm(p,packages)
+invisible(lapply(packages, library, character.only = TRUE))
+
+rm(packages)
 
 options(scipen = 999)
-Sys.setlocale("LC_ALL", "English")
-
-
+try(Sys.setlocale("LC_ALL", "English"), silent = TRUE)
