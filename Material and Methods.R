@@ -11,10 +11,6 @@
 ##########################################################################################
 
 #### 1. CONCEPTUAL FIGURE
-# Load the necessary library
-library(ggplot2)
-library(dplyr)
-
 # Create 5 dummy data
 set.seed(132)
 data1 <- data.frame(
@@ -332,5 +328,6 @@ dat[,c(3:10)] <- log10(dat[,c(3:10)])
 
 ## 3.2. Z-score normalisation
 dat[,c(3:10)] <- scale(dat[,c(3:10)], center = TRUE, scale = TRUE)
+
 
 
