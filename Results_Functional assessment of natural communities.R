@@ -9,8 +9,6 @@
 #############################################################################
 ############################## RESULTS SECTION ##############################
 #############################################################################
-require(ggnewscale)
-require(ggpmisc)
 
 ## 1. Load the datasets
 df <-
@@ -71,7 +69,7 @@ df[14:19] <- lapply(df[14:19], function(x) {
 
 df <- df[complete.cases(df[, 2:9]), ]
 
-df <- plyr::rbind.fill(dat, df)
+df <- rbind.fill(dat, df)
 
 ## 3. Alignement trait-space between experiment-field (individual-level: Fig. S9)
 # 3.1. Dimension reduction through a Principal Component Analysis
@@ -83,14 +81,11 @@ screeplot(PCA, main = "Screeplot - Eigenvalues")
 # 3.3. Eigenvalues contribution
 (PCA$eig*100)/sum(PCA$eig)
 
-# 3.4. Quick visualisation of the PCA
-s.corcircle(PCA$co)
-
-# 3.5. Testing the number of axis to keep
+# 3.4. Testing the number of axis to keep
 PCAtest(PCA$tab, 999, 999, 0.001, varcorr=TRUE, counter=FALSE, plot=TRUE)
 
-# 3.6. Contribution of each variable
-rowSums(100*(factoextra::get_pca_var(PCA)$cos2)[,c(1,2)])
+# 3.5. Contribution of each variable
+rowSums(100*(get_pca_var(PCA)$cos2)[,c(1,2)])
 
 df$Axis1 <- -PCA$li$Axis1
 df$Axis2 <- PCA$li$Axis2
@@ -114,11 +109,12 @@ df <- df %>%
 
 PCA$co$Label <- rownames(PCA$co)
 
+
 ## 4. Data preparation - Fig. 5
 # 4.1. Calculate barycenters (centroids) for each group
 centroids <- df %>%
   group_by(Sample, Date) %>%
-  dplyr::summarise(
+  summarise(
     Axis1 = mean(Axis1),
     Axis2 = mean(Axis2)
   )
@@ -126,7 +122,7 @@ centroids <- df %>%
 centroids_treat <- 
   df %>%
   group_by(Treatment) %>%
-  dplyr::summarise(
+  summarise(
     Axis1 = mean(Axis1),
     Axis2 = mean(Axis2)
   )
