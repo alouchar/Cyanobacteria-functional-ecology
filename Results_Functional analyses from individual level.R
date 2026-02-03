@@ -76,7 +76,7 @@ rm(list = setdiff(ls(),"reduced_dim"))
 ## 2.9. Delineation of multidimensional functional space
 
 # The methodology relies on the probabilistic hypervolume since it considers abundance thus being less sensitive to outliers
-bw_estimate <- hypervolume::estimate_bandwidth(reduced_dim[, c("PCA1","PCA2")], method = "cross-validation")
+bw_estimate <- estimate_bandwidth(reduced_dim[, c("PCA1","PCA2")], method = "cross-validation")
 
 
 ## 3. Computation of functional diversity indices based on functional hypervolumes
@@ -126,7 +126,7 @@ compute_hypervolume_treatment <- function(tr, data, bw) {
       DATA <- temp[temp$Replicate == replicates[i], ]
       
       # Construction of probabilistic Gaussian hypervolumes
-      hypervolume::hypervolume_gaussian(
+      hypervolume_gaussian(
         data = DATA[, c("PCA1", "PCA2")],
         kde.bandwidth = bw,
         quantile.requested = 0.95,
@@ -156,9 +156,6 @@ compute_hypervolume_treatment <- function(tr, data, bw) {
     div  = kernel.dispersion(hv)    # Functional dispersion
   )
 }
-
-reduced_sample <- reduced_dim
-
 
 ## 3.3. Run the analysis for all environmental treatments
 Functional_rep_space_microcystis <- do.call(
@@ -464,5 +461,6 @@ p <- plot_grid(top, bot, ncol =1)
 p
 
 ggsave(file="Functional diversity.svg", plot=p, width=20, height=20, units = "cm")
+
 
 
