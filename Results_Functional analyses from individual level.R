@@ -462,5 +462,4 @@ p
 
 ggsave(file="Functional diversity.svg", plot=p, width=20, height=20, units = "cm")
 
-
-
+detach("package:plyr", unload = TRUE)
