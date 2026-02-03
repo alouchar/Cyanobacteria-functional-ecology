@@ -65,16 +65,16 @@ p <-
   )
 p
 ggsave(file="Functional space 2 traits.svg", plot=p, width=5, height=5, units = "cm")
-  
+
 ## Dummy pca on the data
 dat <- rbind(data1,data2,data3)
-  
+
 PCA <- ade4::dudi.pca(dat[,c(1:4)],  center = TRUE, scale =  TRUE, scannf = FALSE, nf = 7)
-  
+
 screeplot(PCA, main = "Screeplot - Eigenvalues")
-  
+
 (PCA$eig*100)/sum(PCA$eig)
-  
+
 # 7.2) Plot simple PCA
 ade4::s.corcircle(PCA$co)
 
@@ -110,8 +110,10 @@ ggsave(file="Functional space n traits.svg", plot=p, width=5, height=5, units = 
 rm(data1,data2,data3)
 
 DATA <- dat %>%
-  group_by(Treatment) %>%
-  summarise(across(c(Axis1, Axis2, Axis3, Axis4), mean))
+  dplyr::group_by(Treatment) %>%
+  dplyr::summarise(
+    dplyr::across(c(Axis1, Axis2, Axis3, Axis4), mean)
+    )
 
 ##Extract centroid of func. space ------------------ N
 p_N <- ggplot(subset(dat,Treatment == 'N'), mapping = aes(x = Axis1, y = Axis2)) +
@@ -119,7 +121,7 @@ p_N <- ggplot(subset(dat,Treatment == 'N'), mapping = aes(x = Axis1, y = Axis2))
   theme_linedraw() +
   xlim(-2.6,3) +
   ylim(-2.6,2)
-  
+
 contours_N <- layer_data(p_N)
 contours_N <- contours_N[contours_N$piece == 5,]
 
@@ -196,20 +198,25 @@ find_neighbors <- function(df) {
   return(edges)
 }
 
+edges <- dat %>%
+  dplyr::group_by(Treatment) %>%
+  dplyr::group_modify(~ find_neighbors(.x)) %>%
+  dplyr::ungroup()
 
-edge_data <- dat %>%
-  group_by(Treatment) %>%
-  do(find_neighbors(.)) %>%
-  ungroup()
+coords <- dat %>%
+  dplyr::select(id, Treatment, Axis1, Axis2)
 
-# Merge edge_data with node data to get coordinates for plotting
-edge_data <- merge(dat,edge_data, by.x = c("Treatment","id"), by.y = c("Treatment","from"))
+edge_data <- edges %>%
+  dplyr::left_join(coords, by = c("from" = "id", "Treatment")) %>%
+  dplyr::rename(x_from = Axis1, y_from = Axis2) %>%
+  dplyr::left_join(coords, by = c("to" = "id", "Treatment")) %>%
+  dplyr::rename(x_to = Axis1, y_to = Axis2)
 
 edge_data <- edge_data %>%
-  left_join(dat, by = c("from" = "id")) %>%
-  rename(x_from = Axis1, y_from = Axis2) %>%
-  left_join(dat, by = c("to" = "id")) %>%
-  rename(x_to = Axis1, y_to = Axis2)
+  dplyr::left_join(
+    dat %>% dplyr::select(id, Trait_1:Trait_4, Axis1:Axis4),
+    by = c("from" = "id")
+  )
 
 #### Functional Richness
 
@@ -328,6 +335,7 @@ dat[,c(3:10)] <- log10(dat[,c(3:10)])
 
 ## 3.2. Z-score normalisation
 dat[,c(3:10)] <- scale(dat[,c(3:10)], center = TRUE, scale = TRUE)
+
 
 
 
