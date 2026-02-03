@@ -69,14 +69,14 @@ ggsave(file="Functional space 2 traits.svg", plot=p, width=5, height=5, units = 
 ## Dummy pca on the data
 dat <- rbind(data1,data2,data3)
 
-PCA <- ade4::dudi.pca(dat[,c(1:4)],  center = TRUE, scale =  TRUE, scannf = FALSE, nf = 7)
+PCA <- dudi.pca(dat[,c(1:4)],  center = TRUE, scale =  TRUE, scannf = FALSE, nf = 7)
 
 screeplot(PCA, main = "Screeplot - Eigenvalues")
 
 (PCA$eig*100)/sum(PCA$eig)
 
 # 7.2) Plot simple PCA
-ade4::s.corcircle(PCA$co)
+s.corcircle(PCA$co)
 
 dat <- cbind(dat,PCA$li)
 
@@ -110,10 +110,10 @@ ggsave(file="Functional space n traits.svg", plot=p, width=5, height=5, units = 
 rm(data1,data2,data3)
 
 DATA <- dat %>%
-  dplyr::group_by(Treatment) %>%
-  dplyr::summarise(
-    dplyr::across(c(Axis1, Axis2, Axis3, Axis4), mean)
-    )
+  group_by(Treatment) %>%
+  summarise(
+    across(c(Axis1, Axis2, Axis3, Axis4), mean)
+  )
 
 ##Extract centroid of func. space ------------------ N
 p_N <- ggplot(subset(dat,Treatment == 'N'), mapping = aes(x = Axis1, y = Axis2)) +
@@ -176,9 +176,6 @@ centroid <- as.data.frame(t(centroid))
 centroid$x <- as.numeric(as.character(centroid$x))
 centroid$y <- as.numeric(as.character(centroid$y))
 
-require(FNN)
-require(spdep)
-
 dat$id <- rownames(dat)
 
 find_neighbors <- function(df) {
@@ -199,22 +196,23 @@ find_neighbors <- function(df) {
 }
 
 edges <- dat %>%
-  dplyr::group_by(Treatment) %>%
-  dplyr::group_modify(~ find_neighbors(.x)) %>%
-  dplyr::ungroup()
+  group_by(Treatment) %>%
+  group_modify(~ find_neighbors(.x)) %>%
+  ungroup()
 
 coords <- dat %>%
-  dplyr::select(id, Treatment, Axis1, Axis2)
+  select(id, Treatment, Axis1, Axis2)
 
 edge_data <- edges %>%
-  dplyr::left_join(coords, by = c("from" = "id", "Treatment")) %>%
-  dplyr::rename(x_from = Axis1, y_from = Axis2) %>%
-  dplyr::left_join(coords, by = c("to" = "id", "Treatment")) %>%
-  dplyr::rename(x_to = Axis1, y_to = Axis2)
+  left_join(coords, by = c("from" = "id", "Treatment")) %>%
+  rename(x_from = Axis1, y_from = Axis2) %>%
+  left_join(coords, by = c("to" = "id", "Treatment")) %>%
+  rename(x_to = Axis1, y_to = Axis2)
 
 edge_data <- edge_data %>%
-  dplyr::left_join(
-    dat %>% dplyr::select(id, Trait_1:Trait_4, Axis1:Axis4),
+  left_join(
+    dat %>% 
+      select(id, Trait_1:Trait_4, Axis1:Axis4),
     by = c("from" = "id")
   )
 
@@ -309,9 +307,8 @@ p <-
     legend.position = "none"
   )
 ggsave(file="Functional Dispersion.svg", plot=p, width=5, height=5, units = "cm")
-p
 
-rm(list=setdiff(ls(), c("dat","edge_data", "DATA")))
+rm(list=ls())
 
 #### 2. DATA LOADING
 # IndTraits contains flow cytometry informations at the individual level for each treatment obtained through the PhytoCytoTraits GUI.
@@ -323,7 +320,7 @@ dat <- get_dataframe_by_name(
   dataset  = "10.34894/9X9YMO",
   filename = "IndCyano_Louchart_Limitation_experiment_June2025.xlsx",
   original = TRUE,
-  .f       = readxl::read_excel,
+  .f       = read_excel,
   sheet    = "IndTraits"
 )
 
@@ -335,7 +332,3 @@ dat[,c(3:10)] <- log10(dat[,c(3:10)])
 
 ## 3.2. Z-score normalisation
 dat[,c(3:10)] <- scale(dat[,c(3:10)], center = TRUE, scale = TRUE)
-
-
-
-
