@@ -10,6 +10,29 @@
 ############################## MATERIAL AND METHODS SECTION ##############################
 ##########################################################################################
 
+#### Package loading
+# Note: ggConvexHull and PCAtest must be installed from GitHub manually:
+# install.packages("remotes") 
+# install.packages("devtools")
+# remotes::install_github("cmartin/ggConvexHull")
+# devtools::install_github("arleyc/PCAtest")
+
+install.packages("remotes")
+
+packages = c("ggplot2","ade4","dplyr", "dataverse", "readxl", "phaeatmap")
+
+for(p in packages){
+  if(!require(p, character.only = T)){
+    install.packages(p)
+  }
+  require(p, character.only = T)
+}
+
+rm(p,packages)
+
+options(scipen = 999)
+Sys.setlocale("LC_ALL", "English")
+
 #### 1. CONCEPTUAL FIGURE
 # Create 5 dummy data
 set.seed(132)
@@ -334,5 +357,7 @@ dat[,c(3:10)] <- log10(dat[,c(3:10)])
 dat[,c(3:10)] <- scale(dat[,c(3:10)], center = TRUE, scale = TRUE)
 
 
-# Unload packages
+# Clean environment and unload packages
+rm(DAT, heatmap, NOM, num_mat)
 lapply(paste('package:',names(sessionInfo()$otherPkgs),sep=""),detach,character.only=TRUE,unload=TRUE)
+
