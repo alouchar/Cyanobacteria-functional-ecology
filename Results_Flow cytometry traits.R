@@ -38,3 +38,7 @@ svg(filename = "Heatmap_filters_treatments.svg",width=7, height=7, family = "san
 heatmap
 dev.off()
 
+
+# Clean environment and unload packages
+rm(DAT, heatmap, NOM, num_mat)
+lapply(paste('package:',names(sessionInfo()$otherPkgs),sep=""),detach,character.only=TRUE,unload=TRUE)
