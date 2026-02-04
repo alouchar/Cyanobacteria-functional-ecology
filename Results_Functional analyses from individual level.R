@@ -95,7 +95,7 @@ bw_estimate <- estimate_bandwidth(reduced_dim[, c("PCA1","PCA2")], method = "cro
 
 
 ## 3. Computation of functional diversity indices based on functional hypervolumes
-## Steps 3.1 and 3.2 are computationally intensive and may require several days per treatment depending on data size.
+## Step 3.3 is computationally intensive and may require several days per treatment depending on data size.
 
 ## 3.1. Hypervolume computation parallelized using foreach on multiple CPU cores
 
@@ -482,4 +482,5 @@ ggsave(file="Functional diversity.svg", plot=p, width=20, height=20, units = "cm
 # Clean environment and unload packages
 rm(list = ls())
 lapply(paste('package:',names(sessionInfo()$otherPkgs),sep=""),detach,character.only=TRUE,unload=TRUE)
+
 
