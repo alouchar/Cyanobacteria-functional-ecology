@@ -480,5 +480,6 @@ p
 ggsave(file="Functional diversity.svg", plot=p, width=20, height=20, units = "cm")
 
 # Clean environment and unload packages
-rm
+rm(list = ls())
 lapply(paste('package:',names(sessionInfo()$otherPkgs),sep=""),detach,character.only=TRUE,unload=TRUE)
+
