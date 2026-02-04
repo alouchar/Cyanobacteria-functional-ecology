@@ -57,39 +57,33 @@ Tabs: IndTraits, CommTraits, envData, Supp. S1, Supp. S6
 ```r
 # ==== Required Packages and Versions ====
 
-# ggConvexHull      0.1.0
-# svMisc            1.2.3
 # dplyr             1.1.3
 # ggplot2           3.5.1
-# RColorBrewer      1.1-3
 # ggrepel           0.9.4
 # devtools          2.4.5
 # dataverse         0.3.16
 # PCAtest           0.0.1
-# tidyr             1.3.0
 # ggsci             3.0.0
-# tictoc            1.2
 # BAT               2.9.6
 # reshape2          1.4.4
-# ggpubr            0.6.0
 # pheatmap          1.0.12
 # hypervolume       3.1.3
-# alphahull         2.5
 # ade4              1.7-22
 # ggExtra           0.10.1
-# corrplot          0.92
 # tidyverse         2.0.0
 # ggnewscale        0.4.10
 # ggpmisc           0.5.4-1
-# scales            1.3.0
 # cowplot           1.1.3
 # foreach           1.5.2
 # doSNOW            1.0.20
-# progress          1.2.2 
+# stringr           1.6.0
+# factoextra        1.0.7
+# rstatix           0.7.3
+# ggpattern         1.2.1
+# parallel          4.5.2
 # plyr              1.8.9
 # conover.test      1.1.5
 # multcompView      0.1-9
 # Matrix            1.6-1.1
-# ggbreak           0.1.2
 # readxl            1.4.3
 ```
