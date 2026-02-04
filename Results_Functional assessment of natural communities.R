@@ -10,6 +10,20 @@
 ############################## RESULTS SECTION ##############################
 #############################################################################
 
+##### Load packages
+packages = c("dataverse", "readxl", "plyr", "ade4", 
+             "PCAtest", "factoextra", "dplyr", "ggnewscale",
+             "ggsci", "ggrepel")
+
+for(p in packages){
+  if(!require(p, character.only = T)){
+    install.packages(p)
+  }
+  require(p, character.only = T)
+}
+
+rm(p,packages)
+
 ## 1. Load the datasets
 df <-
   get_dataframe_by_name(
