@@ -6,7 +6,6 @@ The code uses R version 4.3.1.
   1. License
   2. README
   3. R scripts:
-  - Packages loading.R
   - Material and Methods.R
   - Results_Flow cytometry traits.R
   - Results_Functional analyses from individual level.R
@@ -15,9 +14,6 @@ The code uses R version 4.3.1.
 
 ## Reproduction of analyses and figures 
 
-#### Packages loading
-
-`Packages loading.R`
 
 #### Material and Methods
 
