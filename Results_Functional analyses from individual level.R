@@ -462,3 +462,6 @@ p <- plot_grid(top, bot, ncol =1)
 p
 
 ggsave(file="Functional diversity.svg", plot=p, width=20, height=20, units = "cm")
+
+# Unload packages
+lapply(paste('package:',names(sessionInfo()$otherPkgs),sep=""),detach,character.only=TRUE,unload=TRUE)
