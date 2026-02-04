@@ -19,7 +19,7 @@
 
 install.packages("remotes")
 
-packages = c("ggplot2","ade4","dplyr", "dataverse", "readxl", "phaeatmap")
+packages = c("ggplot2","ade4","dplyr", "dataverse", "readxl", "pheatmap")
 
 for(p in packages){
   if(!require(p, character.only = T)){
@@ -355,3 +355,4 @@ dat[,c(3:10)] <- log10(dat[,c(3:10)])
 
 ## 3.2. Z-score normalisation
 dat[,c(3:10)] <- scale(dat[,c(3:10)], center = TRUE, scale = TRUE)
+
