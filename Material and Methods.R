@@ -355,9 +355,3 @@ dat[,c(3:10)] <- log10(dat[,c(3:10)])
 
 ## 3.2. Z-score normalisation
 dat[,c(3:10)] <- scale(dat[,c(3:10)], center = TRUE, scale = TRUE)
-
-
-# Clean environment and unload packages
-rm(DAT, heatmap, NOM, num_mat)
-lapply(paste('package:',names(sessionInfo()$otherPkgs),sep=""),detach,character.only=TRUE,unload=TRUE)
-
