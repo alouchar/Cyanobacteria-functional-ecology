@@ -10,6 +10,22 @@
 ############################## RESULTS SECTION ##############################
 #############################################################################
 
+#### Package loading
+packages = c("ade4","PCAtest", "factoextra", "ggplot2", "ggExtra",
+             "ggsci","ggrepel", "hypervolume", "parallel", "doSNOW",
+             "foreach","dplyr", "BAT", "conover.test", "stringr",
+             "Matrix","Matrix", "multcompView", "reshape2", "cowplot")
+
+for(p in packages){
+  if(!require(p, character.only = T)){
+    install.packages(p)
+  }
+  require(p, character.only = T)
+}
+
+rm(p,packages)
+
+
 #### FUNCTIONAL ANALYSES FROM INDIVIDUAL LEVEL
 set.seed(123)  # for reproducibility
 
@@ -463,5 +479,6 @@ p
 
 ggsave(file="Functional diversity.svg", plot=p, width=20, height=20, units = "cm")
 
-# Unload packages
+# Clean environment and unload packages
+rm
 lapply(paste('package:',names(sessionInfo()$otherPkgs),sep=""),detach,character.only=TRUE,unload=TRUE)
