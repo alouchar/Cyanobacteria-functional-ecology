@@ -11,6 +11,7 @@
 #############################################################################
 
 #### FUNCTIONAL ANALYSES FROM INDIVIDUAL LEVEL
+set.seed(123)  # for reproducibility
 
 ## 2. Computation of functional space 
 
@@ -30,7 +31,7 @@ s.corcircle(PCA$co)
 PCAtest(PCA$tab, 999, 999, 0.001, varcorr=TRUE, counter=FALSE, plot=TRUE)
 
 ## 2.6. Contribution of each variable
-rowSums(100*(factoextra::get_pca_var(PCA)$cos2)[,c(1,2)])
+rowSums(100*(get_pca_var(PCA)$cos2)[,c(1,2)])
 
 
 ## 2.7. Plot PCA Biplot with density curve per environmental conditions (superimposition check between environmental conditions)
@@ -59,8 +60,6 @@ pca_marg <- ggMarginal(p, groupColour = TRUE, groupFill = TRUE)
 pca_marg
 p
 ggsave(file="PCA_density.svg", plot=pca_marg, width=16, height=16, units = "cm", dpi = 400)
-
-rm(heatmap, NOM, num_mat)
 
 ## 2.8. PCA eigenvalues dataframe binded with environmental conditions and replicate
 reduced_dim <- as.data.frame(cbind(dat, PCA$li$Axis1, -PCA$li$Axis2, PCA$li$Axis3, PCA$li$Axis4))
@@ -156,6 +155,8 @@ compute_hypervolume_treatment <- function(tr, data, bw) {
     div  = kernel.dispersion(hv)    # Functional dispersion
   )
 }
+
+
 
 ## 3.3. Run the analysis for all environmental treatments
 Functional_rep_space_microcystis <- do.call(
@@ -430,7 +431,7 @@ melt_mat$Var1 <- factor(melt_mat$Var1, levels = treatments)
 melt_mat$Var2 <- factor(melt_mat$Var2, levels = treatments)
 
 # Assign colors for axis labels using ggsci palette
-axis_colors <- ggsci::pal_d3("category20")(length(treatments))
+axis_colors <- pal_d3("category20")(length(treatments))
 names(axis_colors) <- treatments
 
 # Replace +CO2 with proper subscript for axis labels
@@ -461,5 +462,3 @@ p <- plot_grid(top, bot, ncol =1)
 p
 
 ggsave(file="Functional diversity.svg", plot=p, width=20, height=20, units = "cm")
-
-detach("package:plyr", unload = TRUE)
