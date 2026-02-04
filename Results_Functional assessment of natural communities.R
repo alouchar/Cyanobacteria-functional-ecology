@@ -183,3 +183,7 @@ p <- ggplot() +
         panel.grid.minor = element_blank())
 p
 ggsave(file="figure 5.svg", plot=p, width=20, height=14, units = "cm")
+
+## Clean environment and package loading
+rm(list = ls())
+lapply(paste('package:',names(sessionInfo()$otherPkgs),sep=""),detach,character.only=TRUE,unload=TRUE)
