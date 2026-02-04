@@ -9,19 +9,19 @@
 #####################################################################################
 ############################## SUPPLEMENTARY MATERIALS ##############################
 #####################################################################################
-rm(list = ls(all=TRUE))
+packages = c("dataverse", "readxl", "dplyr", "ggplot2", 
+             "cowplot", "rstatix", "ggpattern", "ade4",
+             "ggrepel", "ggsci", "ggExtra","ggpmisc", 
+             "reshape2", "multcompView","tidyverse")
 
-require(dplyr)
-require(ggplot2)
-require(tidyr)
-require(cowplot)
-require(patchwork)
-require(rstatix)
-require(ggpattern)
-library(tidyr)
-library(multcompView)
-library(ggrepel)
+for(p in packages){
+  if(!require(p, character.only = T)){
+    install.packages(p)
+  }
+  require(p, character.only = T)
+}
 
+rm(p,packages)
 
 ## Supp. Material fig. S1
 dat <-
@@ -55,10 +55,9 @@ p2 <-
 
 
 p <- plot_grid(p1 + theme(legend.position = "none"), 
-          p2 + theme(legend.position = "none"),
-          legend,
-          nrow = 3, rel_heights = c(1,1,0.2))
-
+               p2 + theme(legend.position = "none"),
+               legend,
+               nrow = 3, rel_heights = c(1,1,0.2))
 ggsave(file="Algorithm_selection.svg", plot=p, width= 17.3, height=12, units = "cm")
 
 
@@ -139,7 +138,7 @@ p4 <- dat %>%
 bot <- plot_grid(p2, p4)
 top <- plot_grid(p1, p3)
 p <- plot_grid(top, bot, ncol =1)
-p
+
 ggsave(file="Supplementary mat distri.svg", plot=p, width=36, height=36, units = "cm")
 
 
@@ -187,7 +186,7 @@ img <- ggplot(data = melt_mat, aes(x = Var1, y = Var2, fill = value)) +
   coord_fixed(ratio = 1) +
   theme(axis.text.x = element_text(size = 12, family = "Arial", hjust = 1, angle = 35),
         axis.text.y = element_text(size = 12, family = "Arial"))
-img
+
 ggsave(file = "collinerity traits.svg", plot = img, width = 22, height = 22,  units = "cm")
 
 
@@ -215,7 +214,7 @@ p <- ggplot(wss, aes(x = k, y = tot_withinss)) +
   theme(
     text = element_text(size = 8)
   )
-
+p
 ggsave(filename = "nb_kmeans_cluster.svg",plot = p, width=7, height=7,  units = "cm")
 
 
@@ -342,8 +341,8 @@ df_long <- df %>%
   ) %>%
   mutate(
     Phase = recode(Phase,
-               Chla_start = "Start",
-               Chla_end   = "End"),
+                   Chla_start = "Start",
+                   Chla_end   = "End"),
     Phase = factor(Phase, levels = c("Start", "End"))
   )
 
@@ -409,11 +408,11 @@ df_sum <- df_sum %>%
 
 
 p <- ggplot(df_sum,
-       aes(x = Phase, y = mean,
-           color = Treatment,
-           group = Treatment)) +
+            aes(x = Phase, y = mean,
+                color = Treatment,
+                group = Treatment)) +
   
-  geom_line(size = 1) +
+  geom_line(linetype = 1) +
   geom_point(size = 2) +
   
   geom_errorbar(
@@ -468,61 +467,80 @@ p <- ggplot(df_sum,
 ggsave(filename = "figure_chla.svg", plot = p, width = 24, height = 18, units = "cm", dpi = 400)
 
 
-## Supp. Material fig. S7
+## Supp. Material fig. S7.
 common_theme <- theme(
   axis.text  = element_text(size = 10),
   axis.title = element_text(size = 10)
 ) +
   theme_bw()
 
+env <-
+  get_dataframe_by_name(
+    filename  = "IndCyano_Louchart_Limitation_experiment_June2025.xlsx",
+    dataset   = "10.34894/9X9YMO",
+    server = "dataverse.nl",
+    .f = function(file) read_excel(file, sheet = "EnvData"),
+  )
+env$Date <- as.Date(env$Date, format = "%d-%m-%Y")
+env <- env[,c(1:8,10,9)]
+
+env[4:9] <- lapply(env[4:9], function(x) {
+  if(is.factor(x)) x <- as.character(x)
+  
+  x[x == "NA"] <- NA
+  
+  as.numeric(x)
+})
+
+
 p1 <- 
-  centroids %>%
+  env %>%
   drop_na(`TN (mmol/L)`) %>%
   ggplot(mapping = aes(x = Date, y = `TN (mmol/L)`)) +
   geom_point() +
-  geom_point(data = N_lim, mapping = aes(x = Date, `TN (mmol/L)`), col = "orange", size = 3, shape = 21,  stroke = 1.2) +
+  geom_point(data = env %>% filter(`N Limitation` == "Y"), mapping = aes(x = Date, `TN (mmol/L)`), col = "orange", size = 3, shape = 21,  stroke = 1.2) +
   geom_line() +
   xlab("Date") +
   ylab(expression("Total Nitrogen (mmol L"^{-1}*")" )) +
   common_theme
 
 p2 <- 
-  centroids %>%
+  env %>%
   drop_na(`DIN (mmol/L)`) %>%
   ggplot(mapping = aes(x = Date, y = `DIN (mmol/L)`)) +
   geom_point() +
-  geom_point(data = N_lim, mapping = aes(x = Date, y = `DIN (mmol/L)`), col = "orange", size = 3, shape = 21,  stroke = 1.2) +
+  geom_point(data = env %>% filter(`N Limitation` == "Y"), mapping = aes(x = Date, y = `DIN (mmol/L)`), col = "orange", size = 3, shape = 21,  stroke = 1.2) +
   geom_line() +
   xlab("Date") +
   ylab(expression("Dissolved Inorganic Nitrogen (mmol L"^{-1}*")" )) +
   common_theme
 
 p3 <- 
-  centroids %>%
+  env %>%
   drop_na(`TP (mmol/L)`) %>%
   ggplot(mapping = aes(x = Date, y = `TP (mmol/L)`)) +
   geom_point() +
-  geom_point(data = N_lim, mapping = aes(x = Date, `TP (mmol/L)`), col = "orange", size = 3, shape = 21,  stroke = 1.2) +
+  geom_point(data = env %>% filter(`N Limitation` == "Y"), mapping = aes(x = Date, `TP (mmol/L)`), col = "orange", size = 3, shape = 21,  stroke = 1.2) +
   geom_line() +
   xlab("Date") +
   ylab(expression("Total Phosphorus (mmol L"^{-1}*")" )) +
   common_theme
 
 p4 <- 
-  centroids %>%
+  env %>%
   drop_na(I_m) %>%
   ggplot(mapping = aes(x = Date, y = I_m)) +
   geom_point() +
-  geom_point(data = N_lim, mapping = aes(x = Date, y = I_m), col = "orange", size = 3, shape = 21,  stroke = 1.2) +
+  geom_point(data = env %>% filter(`N Limitation` == "Y"), mapping = aes(x = Date, y = I_m), col = "orange", size = 3, shape = 21,  stroke = 1.2) +
   geom_line() +
   xlab("Date") +
   ylab(expression("Irradiance of the mixed layer (" ~ mu * "mol photons" ~ m^2 ~ s^-1*")")) +
   common_theme
 
 p5 <- 
-  centroids %>%
+  env %>%
   ggplot(mapping = aes(y = `TN (mmol/L)`/`TP (mmol/L)`, x = Date))+
-  geom_point(data = N_lim, aes(y = `TN (mmol/L)`/`TP (mmol/L)`, x = Date) , col = "orange", size = 3, shape = 21,  stroke = 1.2) +
+  geom_point(data = env %>% filter(`N Limitation` == "Y"), aes(y = `TN (mmol/L)`/`TP (mmol/L)`, x = Date) , col = "orange", size = 3, shape = 21,  stroke = 1.2) +
   geom_point() +
   ylab("TN:TP") +
   xlab("Date") +
@@ -531,9 +549,9 @@ p5 <-
   common_theme
 
 p6 <- 
-  centroids %>%
+  env %>%
   ggplot(mapping = aes(y = `Global irradiance`, x = Date))+
-  geom_point(data = N_lim, aes(y = `Global irradiance`, x = Date) , col = "orange", size = 3, shape = 21,  stroke = 1.2) +
+  geom_point(data = env %>% filter(`N Limitation` == "Y"), aes(y = `Global irradiance`, x = Date) , col = "orange", size = 3, shape = 21,  stroke = 1.2) +
   geom_point() +
   ylab(expression("Global irradiance (" ~ mu * "mol photons" ~ m^2 ~ s^-1*")")) + 
   xlab("Date") +
@@ -551,7 +569,7 @@ ggsave(file="Supplementary mat TS env param.svg", plot=p, width=18, height=24, u
 
 
 ## Supp. Material fig. S8
-traits_table <- reshape2::melt(
+traits_table <- melt(
   dat[,c(1,3:10)],
   id.vars = "Treatment",
   variable.name = "Trait",
@@ -607,7 +625,9 @@ p <- ggplot() +
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
   facet_wrap(~Source)
-p
 
 ggsave(file="supp figure 5.svg", plot=p, width=26, height=18, units = "cm")
 
+## clean environment
+rm(list = ls(all=TRUE))
+lapply(paste('package:',names(sessionInfo()$otherPkgs),sep=""),detach,character.only=TRUE,unload=TRUE)
